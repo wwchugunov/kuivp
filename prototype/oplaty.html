@@ -255,6 +255,9 @@ ul.about b{color:var(--ink)}
 a.xl{color:var(--info);text-decoration:underline;text-decoration-color:rgba(31,74,122,.35);text-underline-offset:2px;cursor:pointer;font-weight:500}
 a.xl:hover{text-decoration-color:currentColor}
 .links{display:flex;flex-direction:column;gap:6px;font-size:13px}
+
+.autonote{background:var(--info-bg);color:var(--info);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.4}
+.autonote b{font-weight:700}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
@@ -601,9 +604,10 @@ function openPay(sid,kind){
   const open=ledger(s,kind).sems.filter(m=>m.left>0);
   const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="scrim" data-mclose></div>
   <form id="payf"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2>Внести оплату</h2><button type="button" class="x" data-mclose aria-label="Закрити">×</button></div>
+   <div class="autonote">Оплати карткою з мобільного застосунку та за посиланням для батьків додаються в історію <b>автоматично</b> — вносити їх не потрібно. Тут вносять лише оплати через касу, паперову квитанцію або виписку.</div>
    <div class="fg">
     <label class="fld"><span>Вид оплати</span><select class="ctl" id="p-kind"><option value="study" ${kind==='study'?'selected':''}>Навчання</option><option value="hostel" ${kind==='hostel'?'selected':''}>Гуртожиток</option></select></label>
-    <label class="fld"><span>Студент</span><select class="ctl" id="p-s">${payable.map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} · ${gById[x.group].name}</option>`).join('')}</select></label>
+    <label class="fld full"><span>Студент</span><input type="hidden" id="p-s" value="${s.id}"><input class="ctl" id="p-find" list="p-list" autocomplete="off" placeholder="Почніть вводити ПІБ або групу" value="${esc(s.name)} · ${gById[s.group].name}"><datalist id="p-list">${payable.map(x=>`<option value="${esc(x.name)} · ${gById[x.group].name}"></option>`).join('')}</datalist></label>
     <label class="fld"><span>Зарахувати з періоду</span><select class="ctl" id="p-k">${open.map(x=>`<option value="${x.key}">${x.label} · залишок ${fmt(x.left)}</option>`).join('')||'<option value="">Немає нарахувань</option>'}</select></label>
     <label class="fld"><span>Сума, грн</span><input class="ctl" id="p-a" inputmode="numeric" value="${open[0]?open[0].left:0}"></label>
     <label class="fld"><span>Дата оплати</span><input class="ctl" id="p-d" type="date" value="2026-11-20"></label>
@@ -618,7 +622,7 @@ function openPay(sid,kind){
   const amt=()=>+String($('#p-a').value).replace(/\s/g,'')||0;
   const upd=()=>{const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();const {out,rest}=allocate(st,kind,$('#p-k').value,a);
     $('#p-prev').innerHTML=a<=0?'Вкажіть суму оплати.':`<span class="caps">Буде зараховано</span>${out.map(o=>`<span>• <b>${o.label}</b> — ${grn(o.amount)} ${o.full?'(закриває семестр)':'(частково)'}</span>`).join('')}${rest>0?`<span style="color:var(--warn)">• Переплата ${grn(rest)} — залишиться на балансі студента</span>`:''}<span style="color:var(--muted)">Квитанція буде позначена «Звірити», доки бухгалтер не підтвердить її випискою.</span>`};
-  $('#p-s').onchange=e=>openPay(e.target.value,kind);$('#p-kind').onchange=e=>openPay(s.id,e.target.value);
+  const pf=$('#p-find');pf.onfocus=()=>pf.select();pf.oninput=e=>{if(!pf.isConnected)return;const x=payable.find(p=>`${p.name} · ${gById[p.group].name}`===pf.value);if(x&&x.id!==s.id)openPay(x.id,kind)};$('#p-kind').onchange=e=>openPay(s.id,e.target.value);
   ['p-k','p-a'].forEach(i=>{$('#'+i).oninput=upd;$('#'+i).onchange=upd});upd();
   m.addEventListener('click',e=>{if(e.target.closest('[data-mclose]'))m.remove()});
   $('#payf').onsubmit=e=>{e.preventDefault();const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();if(a<=0||!$('#p-k').value)return;
@@ -640,7 +644,7 @@ function renderReceipts(tabs){
   main.innerHTML=`${header('Фінанси / Квитанції','Квитанції із застосунку',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
   <div class="segs" role="tablist" aria-label="Статус квитанцій">${[['new','Нові'],['accepted','Прийняті'],['rejected','Відхилені'],['all','Усі']].map(([k,t])=>`<button class="seg ${rfilter===k?'on':''}" data-rf="${k}">${t}<span>${cnt(k)}</span></button>`).join('')}
-    <div class="legend mini">${ICON_PHONE} Студент фотографує квитанцію в застосунку → бухгалтер приймає → студент отримує сповіщення</div></div>
+    <div class="legend mini">${ICON_PHONE} Оплата карткою в застосунку зараховується автоматично. Тут — лише квитанції, які студент надіслав фото</div></div>
   <div class="work"><div class="col"><div class="tw"><table><thead><tr><th>Надіслано</th><th class="l">Студент</th><th class="l">Сума · період</th><th>Квитанція</th><th>Статус / дія</th></tr></thead><tbody>
    ${rows.map(r=>{const s=STUDENTS.find(x=>x.id===r.sid),g=gById[s.group];const per=semsOf(g,r.kind).find(m=>m.key===r.key).label;
      const st=r.status==='accepted'?['Прийнято','ok']:['Відхилено','bad'];
