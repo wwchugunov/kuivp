@@ -238,6 +238,17 @@ ul.about b{color:var(--ink)}
 #sidenav{display:flex;flex-direction:column;gap:14px}
 .side .nav{height:auto;min-height:36px;padding-block:7px;font-size:13.5px;line-height:1.25}
 .side .sec{gap:2px}
+
+/* --- модулі меню зі стрілкою --- */
+.side .sec small{display:none}
+.nav.mod{width:100%;border:0;background:none;text-align:left;cursor:pointer;font:inherit;font-weight:500;color:var(--side-ink)}
+.nav.mod span{flex:1}
+.nav.mod.act{color:#fff;font-weight:700}
+.chev{font-style:normal;font-size:18px;line-height:1;transition:transform .15s;opacity:.7}
+.nav.mod[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.subs{display:flex;flex-direction:column;gap:2px;margin:2px 0 6px 20px;padding-left:10px;border-left:1px solid rgba(255,255,255,.15)}
+.nav.sub{min-height:32px;padding:6px 10px;font-size:13px}
+.nav.sub .cnt{margin-left:auto}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
@@ -405,9 +416,9 @@ function render(){
   $('#sidenav').innerHTML=sideHtml();
   if(PAGES[state.view]){renderPage();return}
   const n=newReceipts();
-  const tabs=`<nav class="tabs" aria-label="Розділи оплат">${[['history','Історія оплат'],['receipts','Квитанції із застосунку'+(n?` <span class="cnt">${n}</span>`:'')],['tariffs','Тарифи'],['reports','Звіти']].map(([k,t])=>`<a href="#${k}" class="${state.view===k?'on':''}">${t}</a>`).join('')}</nav>`;
+  const tabs='';const _old=`<nav class="tabs" aria-label="Розділи оплат">${[['history','Історія оплат'],['receipts','Квитанції із застосунку'+(n?` <span class="cnt">${n}</span>`:'')],['tariffs','Тарифи'],['reports','Звіти']].map(([k,t])=>`<a href="#${k}" class="${state.view===k?'on':''}">${t}</a>`).join('')}</nav>`;
   ({history:renderHistory,receipts:renderReceipts,tariffs:renderTariffs,reports:renderReports})[state.view](tabs);
-  if(state.view==='tariffs'||state.view==='reports'){const nav=main.querySelector('nav.tabs');const box=document.createElement('div');box.className='scrollarea';while(nav.nextSibling)box.appendChild(nav.nextSibling);main.appendChild(box)}
+  if(state.view==='tariffs'||state.view==='reports'){const hd=main.querySelector('.header');const box=document.createElement('div');box.className='scrollarea';while(hd.nextSibling)box.appendChild(hd.nextSibling);main.appendChild(box)}
 }
 function header(crumb,title,btns){return `<div class="header"><div><div class="crumb">${crumb}</div><h1>${title}</h1></div><div class="btns"><button class="btn ghost" data-act="about">Що змінилось</button>${btns}</div></div>`}
 const SEGS=[['all','Усі'],['1','1 курс'],['2','2 курс'],['3','3 курс'],['4','4 курс'],['mob','Академічна мобільність'],['zf','Заочна форма']];
@@ -613,7 +624,7 @@ function renderReceipts(tabs){
   const all=RECEIPTS.slice().sort((a,b)=>(a.status==='new')===(b.status==='new')?b.ts-a.ts:a.status==='new'?-1:1);
   const rows=all.filter(r=>rfilter==='all'||r.status===rfilter);
   const cnt=k=>k==='all'?RECEIPTS.length:RECEIPTS.filter(r=>r.status===k).length;
-  main.innerHTML=`${header('Оплати / Квитанції','Квитанції із застосунку',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
+  main.innerHTML=`${header('Фінанси / Квитанції','Квитанції із застосунку',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
   <div class="segs" role="tablist" aria-label="Статус квитанцій">${[['new','Нові'],['accepted','Прийняті'],['rejected','Відхилені'],['all','Усі']].map(([k,t])=>`<button class="seg ${rfilter===k?'on':''}" data-rf="${k}">${t}<span>${cnt(k)}</span></button>`).join('')}
     <div class="legend mini">${ICON_PHONE} Студент фотографує квитанцію в застосунку → бухгалтер приймає → студент отримує сповіщення</div></div>
@@ -666,14 +677,25 @@ const PAGES={
   cols:['Група','Спеціальність','Семестр','Дисциплін','Кредитів ЄКТС','Екзаменів','Статус'],
   rows:[['ПР 4/24','Право','5','8','30','4',P('Затверджено','ok')],['КБ 3/25','Кібербезпека','3','7','30','3',P('Затверджено','ok')],['К-ПО 2/26','Правоохоронна діяльність','1','9','30','4',P('На погодженні','warn')],['ПР-З 2/25','Право (заочна)','3','6','30','3',P('Затверджено','ok')]]},
 };
-const NAV=[['Фінанси',[['history','Оплати','M2 5h20v14H2zM2 10h20M6 15h4']]],
- ['Дистанційне навчання',[['dist-tech','Технічний журнал занять','M3 5h18v12H3zM8 21h8M12 17v4'],['dist-journal','Журнал групи','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5'],['dist-methods','Навч.-методичне забезпечення','M14 3H6v18h12V7zM14 3v4h4']]],
- ['Канцелярія',[['ord-st','Накази · студенти','M7 3h10v18H7zM10 8h4M10 12h4'],['ord-emp','Накази · працівники','M9 8a3 3 0 1 0 0-.01M3 20c0-3 3-5 6-5s6 2 6 5M16 11h5M18.5 8.5v5'],['ord-disp','Розпорядження','M5 4h14v16H5zM9 9h6M9 13h6M9 17h3']]],
- ['Інше',[['archive','Архів','M3 4h18v4H3zM5 8v12h14V8M10 12h4'],['repo','Репозитарій','M4 4h7v16H4zM13 4h7v16h-7'],['load','Навантаження','M4 20V10M10 20V4M16 20v-7M21 20H3'],['edu','Навчальний відділ','M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5']]]];
+const NAV=[
+ {id:'fin',t:'Фінанси',d:'M2 5h20v14H2zM2 10h20M6 15h4',kids:[['history','Історія оплат'],['receipts','Квитанції із застосунку'],['tariffs','Тарифи'],['reports','Звіти']]},
+ {id:'dist',t:'Дистанційне навчання',d:'M3 5h18v12H3zM8 21h8M12 17v4',kids:[['dist-tech','Технічний журнал занять'],['dist-journal','Журнал групи'],['dist-methods','Навч.-методичне забезпечення']]},
+ {id:'office',t:'Канцелярія',d:'M7 3h10v18H7zM10 8h4M10 12h4',kids:[['ord-st','Накази · студенти'],['ord-emp','Накази · працівники'],['ord-disp','Розпорядження']]},
+ {id:'archive',t:'Архів',d:'M3 4h18v4H3zM5 8v12h14V8M10 12h4'},
+ {id:'repo',t:'Репозитарій',d:'M4 4h7v16H4zM13 4h7v16h-7'},
+ {id:'load',t:'Навантаження',d:'M4 20V10M10 20V4M16 20v-7M21 20H3'},
+ {id:'edu',t:'Навчальний відділ',d:'M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5'}];
+const navOpen=new Set();
 const PAY_VIEWS=['history','receipts','tariffs','reports'];
 let ptab={},pq='';
-function sideHtml(){const cur=PAY_VIEWS.includes(state.view)?'history':state.view;
-  return NAV.map(([sec,items])=>`<div class="sec"><small>${sec.toUpperCase()}</small>${items.map(([k,t,d])=>`<a class="nav ${cur===k?'on':''}" href="#${k}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg>${t}</a>`).join('')}</div>`).join('')}
+function sideHtml(){
+  NAV.forEach(m=>{if(m.kids&&m.kids.some(k=>k[0]===state.view))navOpen.add(m.id)});
+  const ic=d=>`<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
+  return `<div class="sec">${NAV.map(m=>{
+    if(!m.kids)return `<a class="nav ${state.view===m.id?'on':''}" href="#${m.id}">${ic(m.d)}${m.t}</a>`;
+    const open=navOpen.has(m.id),act=m.kids.some(k=>k[0]===state.view);
+    return `<button class="nav mod ${act?'act':''}" data-mod="${m.id}" aria-expanded="${open}">${ic(m.d)}<span>${m.t}</span><i class="chev">›</i></button>
+      ${open?`<div class="subs">${m.kids.map(([k,t])=>`<a class="nav sub ${state.view===k?'on':''}" href="#${k}">${t}${k==='receipts'&&newReceipts()?` <span class="cnt">${newReceipts()}</span>`:''}</a>`).join('')}</div>`:''}`}).join('')}</div>`}
 function cellHtml(v){if(v&&v.t)return`<td class="f-${v.c}">${v.t}</td>`;if(typeof v==='string'&&v.startsWith('bar:')){const p=v.slice(4);return`<td><div class="bar" style="--p:${p}%"><i></i><span>${p}%</span></div></td>`}return`<td class="l reg">${esc(v)}</td>`}
 function renderPage(){
   const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):null;
@@ -690,7 +712,7 @@ function renderPage(){
 
 /* ---------- ТАРИФИ ---------- */
 function renderTariffs(tabs){
-  main.innerHTML=`${header('Оплати / Тарифи','Тарифи',`<button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="soon">+ Додати тариф</button>`)}
+  main.innerHTML=`${header('Фінанси / Тарифи','Тарифи',`<button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="soon">+ Додати тариф</button>`)}
   ${tabs}
   <div class="dsub" style="max-width:780px">Тариф задається для набору на весь термін навчання. Зміна тарифу перераховує залишки всіх студентів групи. Сума семестру — половина річного тарифу; терміни оплати — до 01 липня (І сем) і до 20 грудня (ІІ сем).</div>
   <div class="tw"><table><thead><tr><th class="st s0">№</th><th class="l">Група · набір</th><th class="l">Спеціальність</th><th>ОКР · форма</th><th>Термін</th>${[1,2,3,4].map(i=>`<th>${i}-й рік, грн</th>`).join('')}<th>За термін, грн</th><th>Гуртожиток, грн/рік</th><th>Студентів</th></tr></thead><tbody>
@@ -716,7 +738,7 @@ function renderReports(tabs){
     return `<tr class="${cls}"><td class="l">${name}</td><td>${n}</td><td class="reg">${bud}</td><td class="reg">${fr}</td><td class="num">${fmt(charge)}</td><td class="num f-ok">${fmt(paid)}</td><td><div class="bar" style="--p:${Math.round(pct*100)}%"><i></i><span>${Math.round(pct*100)}%</span></div></td><td class="num ${charge-paid>0?'f-bad':''}">${fmt(charge-paid)}</td><td>${debtors}</td></tr>`}).join('');
   const C=[['Денна форма · бакалаври',[[1,118,12,2],[2,104,10,1],[3,97,9,2],[4,93,7,1]]],['Денна форма · магістри',[[1,52,4,1],[2,44,2,0]]],['Заочна форма · бакалаври',[[2,38,0,0],[3,41,0,0],[4,35,0,0],[5,29,0,0]]],['Коледж',[[1,162,8,1],[2,148,7,1],[3,129,5,1]]]];
   const crow=C.map(([t,rs])=>`<tr class="h"><td colspan="7">${t}</td></tr>`+rs.map(([c,n,b,f])=>{const pay=n-b;const ok=Math.round(pay*(.7+((c*7)%5)/25));return `<tr class="s"><td class="l">${c} курс</td><td>${n}</td><td class="reg">${b}</td><td class="reg">${f}</td><td class="f-ok">${ok}</td><td class="${pay-ok?'f-bad':''}">${pay-ok}</td><td><div class="bar" style="--p:${Math.round(ok*100/pay)}%"><i></i><span>${Math.round(ok*100/pay)}%</span></div></td></tr>`}).join('')).join('');
-  main.innerHTML=`${header('Оплати / Звіти','Оплата за навчання · І семестр 2026–2027',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
+  main.innerHTML=`${header('Фінанси / Звіти','Оплата за навчання · І семестр 2026–2027',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
   <div class="filters"><label class="fld"><span>Вид оплати</span><select class="ctl" style="width:170px"><option>Навчання</option><option>Гуртожиток</option></select></label>
    <label class="fld"><span>Період</span><select class="ctl" style="width:220px"><option>І семестр 2026–2027</option><option>ІІ семестр 2026–2027</option><option>Рік 2026–2027</option><option>Весь термін</option></select></label>
@@ -732,6 +754,7 @@ function renderReports(tabs){
 /* ---------- спільне ---------- */
 let tt;function toast(msg,undo){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Скасувати</button>':''}`;document.body.appendChild(t);if(undo)t.querySelector('button').onclick=()=>{undo();t.remove()};clearTimeout(tt);tt=setTimeout(()=>t.remove(),5000)}
 document.addEventListener('click',e=>{
+  const md=e.target.closest('[data-mod]');if(md){const id=md.dataset.mod;navOpen.has(id)?navOpen.delete(id):navOpen.add(id);$('#sidenav').innerHTML=sideHtml();return}
   const t=e.target.closest('[data-open],[data-plus],[data-minus],[data-act],[data-close],[data-verify],[data-dead],[data-accept],[data-reject],[data-goto],[data-kind-switch]');if(!t)return;
   if(t.hasAttribute('data-dead')){e.preventDefault();toast('У прототипі відкрито лише розділ «Оплати»');return}
   if(t.dataset.open){state.sel=state.sel===t.dataset.open&&!t.classList.contains('link')?null:t.dataset.open;render();if(state.sel)setTimeout(()=>document.querySelector('.detail')?.scrollIntoView({block:'nearest',behavior:'smooth'}),0)}
