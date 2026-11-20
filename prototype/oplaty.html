@@ -208,6 +208,7 @@ h1{font-size:22px;margin-top:2px}
 .stats b{font-size:16px}
 .segs{flex:none;align-items:center}
 .seg{height:36px}
+.legend.mini.foot{margin-left:0;flex:none}
 .legend.mini{margin-left:auto;gap:12px;font-size:12px}
 .legend.mini i{width:14px;height:14px;border-radius:3px}
 .work{flex:1;min-height:0;display:flex;gap:16px}
@@ -258,6 +259,18 @@ a.xl:hover{text-decoration-color:currentColor}
 
 .autonote{background:var(--info-bg);color:var(--info);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.4}
 .autonote b{font-weight:700}
+
+/* --- компактна таблиця відомості --- */
+.s1c{left:45px;min-width:220px;max-width:270px}
+td.nm small.note{display:block;font-size:11px;font-weight:500;color:var(--muted);white-space:normal;line-height:1.25;margin-top:2px}
+table.cmp td.two small{display:block;font-size:11px;font-weight:500;opacity:.85;line-height:1.2;margin-top:1px}
+table.cmp td{padding:5px 8px;height:46px}
+table.cmp th{padding-left:8px;padding-right:8px}
+table.cmp td.l.two{min-width:140px;max-width:180px;white-space:normal}
+.col>.tw{flex:0 1 auto}
+.zfs{display:flex;flex-wrap:wrap;gap:8px;flex:none}
+.zf{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:8px 14px;display:flex;gap:14px;align-items:center;font-size:13px;color:var(--ink-2)}
+.zf>b{color:var(--ink)}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
@@ -465,8 +478,31 @@ function zfSummary(){
   if(state.seg!=='zf'||state.mode!=='year')return'';const S=SN(state.sem);
   const byC={};STUDENTS.filter(s=>gById[s.group].form==='Заочна'&&inKind(s)&&gById[s.group].years.includes(state.year)).forEach(s=>{const c=gById[s.group].course;const o=byC[c]=byC[c]||{n:0,mk:0,pS:0,pY:0,cY:0};
     const ss=ledger(s).sems.filter(m=>m.year===state.year);const mS=ss.find(m=>m.n===state.sem);o.n++;if(mS&&mS.charge&&mS.paid>=mS.charge)o.mk++;o.pS+=mS?mS.paid:0;o.pY+=ss.reduce((a,m)=>a+m.paid,0);o.cY+=ss.reduce((a,m)=>a+m.charge,0)});
-  return `<div class="tw" style="align-self:flex-start;max-height:none"><table><thead><tr><th class="l">Заочна форма · курс</th><th>Студентів</th><th>Відмічено «+»</th><th>Внесено за ${S} сем, грн</th><th>Внесено за рік, грн</th><th>Нараховано за рік, грн</th></tr></thead><tbody>
-   ${Object.keys(byC).sort().map(c=>{const o=byC[c];return `<tr><td class="l">${c} курс</td><td>${o.n}</td><td>${o.mk}</td><td class="num">${fmt(o.pS)}</td><td class="num">${fmt(o.pY)}</td><td class="num">${fmt(o.cY)}</td></tr>`}).join('')}</tbody></table></div>`;
+  return `<div class="zfs">${Object.keys(byC).sort().map(c=>{const o=byC[c];return `<div class="zf"><b>${c} курс</b><span>${o.n} студ. · відмічено «+» ${o.mk}</span><span>${S} сем: <b>${fmt(o.pS)}</b> грн</span><span>рік: <b>${fmt(o.pY)}</b> / ${fmt(o.cY)} грн</span></div>`}).join('')}</div>`;
+}
+function yearTableCompact(list){
+  const y=state.year,S=SN(state.sem),O=SN(3-state.sem),nc=state.cont?CONT.length:0,mob=state.seg==='mob';
+  let h=`<table class="cmp"><thead><tr class="g"><th class="st s0" rowspan="2">№</th><th class="st s1c l" rowspan="2">ПІБ студента</th>${contHead()}${mob?'<th rowspan="2">Місто</th>':''}
+   <th colspan="4">${S} семестр ${yearLabel(y)}<small>до ${state.sem===1?'01.07.':'20.12.'}${y}</small></th><th colspan="2">Рік ${yearLabel(y)}</th><th rowspan="2">Статус оплати</th><th rowspan="2">${O} семестр</th></tr>
+   <tr><th>+/−</th><th>Сплачено</th><th>Залишок</th><th>Квитанція</th><th>Сплачено</th><th>Залишок</th></tr></thead><tbody>`;
+  let i=0,lastG='';const span=10+nc+(mob?1:0);
+  list.forEach(s=>{const L=ledger(s),g=L.g;
+    if(g.id!==lastG){lastG=g.id;const t=state.kind==='hostel'?g.hostel:g.tariffs[g.years.indexOf(y)]||0;h+=`<tr><td class="grp st s0"></td><td class="grp st s1c"><a class="xl" data-ggo="${g.id}">${g.name}</a></td><td class="grp" colspan="${span-2}"><span style="margin:0">${g.spec} · ${g.okr} · ${g.form} · ${g.course} курс · ${state.kind==='hostel'?'гуртожиток':'тариф'} ${grn(t)} на рік</span></td></tr>`}
+    const ss=L.sems.filter(m=>m.year===y);const mS=ss.find(m=>m.n===state.sem),mO=ss.find(m=>m.n!==state.sem);
+    const ps=paysOf(s,[mS.key]);const last=ps[0];const unv=ps.find(p=>!p.verified);const newR=RECEIPTS.find(r=>r.sid===s.id&&r.status==='new'&&r.key===mS.key&&r.kind===state.kind);
+    const yc=ss.reduce((a,m)=>a+m.charge,0),yp=ss.reduce((a,m)=>a+m.paid,0);const [stT,stC]=rowStatusYear(s,mS,mO,yc,yp);const [rT,rC]=reconcile(mO);
+    const marked=mS.charge>0&&mS.paid>=mS.charge;const canMark=mS.charge>0&&!marked;
+    const auto=last&&/Застосунок|виписка/i.test(last.method);
+    h+=`<tr class="${state.sel===s.id?'sel':''} ${s.status==='Відраховано'?'off':''}"><td class="st s0 n">${++i}</td><td class="st s1c nm"><a data-open="${s.id}">${esc(s.name)}</a>${s.status!=='Навчається'?`<small class="note" style="color:var(--bad)">${esc(s.status)}${s.statusNote?' · '+esc(s.statusNote.split(',')[0]):''}</small>`:''}${s.benefit||s.note?`<small class="note">${esc(s.benefit||s.note)}</small>`:''}</td>${contCells(s)}${mob?`<td class="reg">${esc(s.mobility)}</td>`:''}
+      <td class="${marked?'f-ok':''}">${canMark?`<button class="plus" title="Позначити: сплачено ${grn(mS.left)}" data-plus="${s.id}">＋</button>`:marked?(last&&last.quick?`<button class="plus on" title="Зняти позначку" data-minus="${last.id}">−</button>`:'✓'):'<span class="reg">—</span>'}</td>
+      <td class="num two f-${mS.cls}">${mS.charge?fmt(mS.paid):mS.cls==='info'?'бюджет':'—'}${last?`<small>${dstr(last.date)}</small>`:''}</td>
+      <td class="num ${mS.left&&mS.due<=TODAY?'f-bad':''}">${mS.charge?fmt(mS.left):'—'}</td>
+      <td class="l two ${newR||unv?'f-warn':''}">${last?`<button class="link" data-open="${s.id}">${esc(last.receipt)}</button><small>${auto?'автоматично · '+(/виписка/i.test(last.method)?'виписка':'застосунок'):esc(last.method)}${unv?' · <button class="vbtn" data-verify="'+unv.id+'">звірити</button>':''}</small>`:newR?`<a class="vbtn" href="#receipts">нова квитанція</a>`:'<span class="reg">—</span>'}</td>
+      <td class="num">${fmt(yp)}</td><td class="num">${fmt(Math.max(0,yc-yp))}</td>
+      <td class="f-${stC}">${esc(stT)}</td>
+      <td class="two f-${rC}">${mO.charge?`${fmt(mO.paid)} / ${fmt(mO.charge)}`:'—'}<small>${rT}</small></td></tr>`});
+  if(!list.length)h+=`<tr><td colspan="40" class="reg" style="height:80px">Нікого не знайдено. Змініть фільтри або пошук.</td></tr>`;
+  return h+'</tbody></table>';
 }
 function renderHistory(tabs){
   const list=filtered();const years=[...new Set(GROUPS.flatMap(g=>g.years))].filter(y=>y<=2027).sort();
@@ -482,18 +518,19 @@ function renderHistory(tabs){
     <div class="sw" role="group" aria-label="Вигляд"><button class="${state.mode==='year'?'on':''}" data-mode="year">Відомість за рік</button><button class="${state.mode==='term'?'on':''}" data-mode="term">Весь термін</button></div>
     ${state.mode==='year'?`<select class="ctl" id="f-year" aria-label="Навчальний рік" title="Навчальний рік">${years.map(y=>`<option value="${y}" ${y===state.year?'selected':''}>${yearLabel(y)}</option>`).join('')}</select>
     <select class="ctl" id="f-sem" aria-label="Семестр відомості" title="Семестр відомості"><option value="1" ${state.sem===1?'selected':''}>І семестр</option><option value="2" ${state.sem===2?'selected':''}>ІІ семестр</option></select>`:''}
+    <select class="ctl" id="f-seg" aria-label="Відомість">${SEGS.map(([k,t])=>`<option value="${k}" ${state.seg===k?'selected':''}>${k==='all'?'Усі курси':t} (${segCount(k)})</option>`).join('')}</select>
     <select class="ctl" id="f-group" aria-label="Група"><option value="">Усі групи</option>${GROUPS.map(g=>`<option value="${g.id}" ${state.group===g.id?'selected':''}>${g.name}</option>`).join('')}</select>
     <select class="ctl" id="f-pay" aria-label="Статус оплати"><option value="">Усі статуси</option>${[['unmarked','Без позначки «+»'],['debt','Мають борг'],['paid','Сплачено повністю'],['verify','Потрібна звірка'],['budget','Бюджет, грант, пільги']].map(([v,t])=>`<option value="${v}" ${state.pay===v?'selected':''}>${t}</option>`).join('')}</select>
     <input class="ctl grow" id="f-q" type="search" placeholder="Пошук: ПІБ або група" aria-label="Пошук" value="${esc(state.q)}">
-    <button class="btn tgl ${state.cont?'on':''}" id="c-cont" aria-pressed="${state.cont}" title="Курс, форма, фінансування, ОКР, пільга, мобільність, громадянство, дата народження, стать, накази, завершення навчання">${state.cont?'✓ ':''}Колонки контингенту</button>
+    ${state.mode==='year'?`<button class="btn tgl ${state.full?'on':''}" id="c-full" aria-pressed="${!!state.full}" title="Усі колонки в порядку відомості бухгалтерії">${state.full?'✓ ':''}Як у відомості</button>`:''}<button class="btn tgl ${state.cont?'on':''}" id="c-cont" aria-pressed="${state.cont}" title="Курс, форма, фінансування, ОКР, пільга, мобільність, громадянство, дата народження, стать, накази, завершення навчання">${state.cont?'✓ ':''}Контингент</button>
   </div>
   ${statsHtml(list)}
-  <div class="segs" role="tablist" aria-label="Відомості">${SEGS.map(([k,t])=>`<button class="seg ${state.seg===k?'on':''}" data-seg="${k}">${t}<span>${segCount(k)}</span></button>`).join('')}
-    <div class="legend mini"><span><i style="background:var(--ok-bg)"></i>сплачено</span><span><i style="background:var(--warn-bg)"></i>частково</span><span><i style="background:var(--bad-bg)"></i>борг</span><span><i style="background:var(--na)"></i>не настав термін</span><span><i style="background:var(--info-bg)"></i>бюджет</span></div></div>
+
   <div class="work">
-    <div class="col">${zfSummary()}<div class="tw">${state.mode==='year'?yearTable(list):termTable(list)}</div></div>
+    <div class="col">${zfSummary()}<div class="tw">${state.mode==='year'?(state.full?yearTable(list):yearTableCompact(list)):termTable(list)}</div></div>
     ${showDetail?detailHtml(state.sel):''}
-  </div>`;
+  </div>
+  <div class="legend mini foot"><span><i style="background:var(--ok-bg)"></i>сплачено</span><span><i style="background:var(--warn-bg)"></i>частково / звірити</span><span><i style="background:var(--bad-bg)"></i>борг</span><span><i style="background:var(--na)"></i>не настав термін</span><span><i style="background:var(--info-bg)"></i>бюджет</span><span>«+» — позначити оплату семестру</span></div>`;
   bindHistory();
 }
 const CONT=['Курс','Форма','Фінансування','ОКР','Пільгова категорія','Акад. мобільність','Громадянство','Дата народження','Повних років','Стать','Зарахування','Відрахування / академвідпустка','Поновлення / переведення','Завершено навчання'];
@@ -555,7 +592,8 @@ function bindHistory(){
   main.querySelectorAll('[data-seg]').forEach(b=>b.onclick=()=>{state.seg=b.dataset.seg;render()});
   const on=(id,k,num)=>{const el=$('#'+id);if(!el)return;el.oninput=el.onchange=()=>{state[k]=num?+el.value:el.value;
     if(id==='f-q'){const p=el.selectionStart;render();const n=$('#f-q');n.focus();n.setSelectionRange(p,p)}else render()}};
-  on('f-year','year',1);on('f-sem','sem',1);on('f-group','group');on('f-pay','pay');on('f-q','q');
+  on('f-year','year',1);on('f-sem','sem',1);on('f-group','group');on('f-seg','seg');on('f-pay','pay');on('f-q','q');
+  const cf=$('#c-full');if(cf)cf.onclick=()=>{state.full=!state.full;render()};
   $('#c-cont').onclick=()=>{state.cont=!state.cont;try{localStorage.setItem('opl-cont',state.cont?'1':'0')}catch(_){}render()};
 }
 
