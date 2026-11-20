@@ -340,7 +340,7 @@ const METHODS=['Застосунок · картка','Застосунок · �
 const OPS=['Олена Кравець','Ірина Мазур'];
 let STUDENTS=[],PAYMENTS=[],RECEIPTS=[],pid=1,rid=1;
 const STOP_EXP=new Date(2026,9,15),STOP_ACAD=new Date(2026,8,30);
-function stopped(s,m){return (s.status==='Відраховано'&&m.due>STOP_EXP)||(s.status==='Академвідпустка'&&m.due>STOP_ACAD)}
+function stopped(s,m){return (s.status==='Відраховано'&&m.due>(s.stopDate||STOP_EXP))||(s.status==='Академвідпустка'&&m.due>(s.stopDate||STOP_ACAD))}
 function share(s){return s.fin==='Грант'?.5:1}
 GROUPS.forEach(g=>NAMES[g.id].forEach((name,i)=>{
   const sp=SPECIAL[name]||{};const by=2005-g.course-Math.floor(rnd()*3)+(g.okr==='Коледж'?4:0)-(g.form==='Заочна'?12:0);
@@ -655,10 +655,10 @@ function openPay(sid,kind){
     <label class="fld full"><span>Примітка</span><input class="ctl" id="p-n" placeholder="Напр.: розстрочка, погоджено деканом"></label>
    </div>
    <div class="prev" id="p-prev"></div>
-   <div class="btns" style="justify-content:flex-end"><button type="button" class="btn" data-mclose>Скасувати</button><button class="btn pri" type="submit">Зберегти оплату</button></div></form>`;
+   <div class="btns" style="justify-content:flex-end"><button type="button" class="btn" data-mclose>Скасувати</button><button class="btn pri" type="submit" ${open.length?'':'disabled'}>Зберегти оплату</button></div></form>`;
   document.body.appendChild(m);
   const amt=()=>+String($('#p-a').value).replace(/\s/g,'')||0;
-  const upd=()=>{const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();const {out,rest}=allocate(st,kind,$('#p-k').value,a);
+  const upd=()=>{if(!open.length){$('#p-prev').innerHTML='У цього студента немає несплачених нарахувань — усі семестри сплачені. Оберіть іншого студента або вид оплати.';return}const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();const {out,rest}=allocate(st,kind,$('#p-k').value,a);
     $('#p-prev').innerHTML=a<=0?'Вкажіть суму оплати.':`<span class="caps">Буде зараховано</span>${out.map(o=>`<span>• <b>${o.label}</b> — ${grn(o.amount)} ${o.full?'(закриває семестр)':'(частково)'}</span>`).join('')}${rest>0?`<span style="color:var(--warn)">• Переплата ${grn(rest)} — залишиться на балансі студента</span>`:''}<span style="color:var(--muted)">Квитанція буде позначена «Звірити», доки бухгалтер не підтвердить її випискою.</span>`};
   const pf=$('#p-find');pf.onfocus=()=>pf.select();pf.oninput=e=>{if(!pf.isConnected)return;const x=payable.find(p=>`${p.name} · ${gById[p.group].name}`===pf.value);if(x&&x.id!==s.id)openPay(x.id,kind)};$('#p-kind').onchange=e=>openPay(s.id,e.target.value);
   ['p-k','p-a'].forEach(i=>{$('#'+i).oninput=upd;$('#'+i).onchange=upd});upd();
@@ -816,8 +816,13 @@ function openOrder(){
   document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target.closest('[data-mclose]'))m.remove()});
   m.querySelector('form').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);const f=fd.get('f');
     const o={no:fd.get('c0'),date:fd.get('c1'),kind,tab,st:fd.get('st'),file:f&&f.name?f.name:'НАКАЗ_'+fd.get('c0')+'.docx'};
-    if(kind==='st'){o.sid=fd.get('c2');o.text=fd.get('c4')||'—'}else{o.custom=Object.assign(cols.map((c,i)=>fd.get('c'+i)||'—').concat([stP(o.st)]),{key:o.no,file:o.file})}
-    ORDERS.unshift(o);state.hl=kind==='st'?o.no+o.sid:o.no;m.remove();render();toast(`Наказ №${o.no} збережено · ${o.file}`)};
+    let eff='';if(kind==='st'){o.sid=fd.get('c2');o.text=fd.get('c4')||'—';const st=STUDENTS.find(x=>x.id===o.sid);
+      if(o.st==='Підписано'){const [d,mo,y]=String(o.date).split('.').map(Number);const dt=new Date(y||2026,(mo||11)-1,d||20);
+        if(tab==='Відрахування'){st.status='Відраховано';st.statusNote=`${o.date}, наказ №${o.no}, ${o.text}`;st.stopDate=dt;eff=' Студента відраховано: нарахування після '+o.date+' зупинено.'}
+        else if(tab==='Поновлення'){st.status='Навчається';st.statusNote='';st.stopDate=null;eff=' Студента поновлено: нарахування відновлено.'}
+        else if(tab==='Переведення'){if(/академ/i.test(o.text)){st.status='Академвідпустка';st.statusNote=`з ${o.date}, наказ №${o.no}`;st.stopDate=dt;eff=' Академвідпустка: нарахування призупинено.'}else{st.transfer=`${o.text}, ${o.date}, наказ №${o.no}`;eff=' Переведення записано в картку студента.'}}}
+      else eff=' Статус студента зміниться після підписання наказу.'}else{o.custom=Object.assign(cols.map((c,i)=>fd.get('c'+i)||'—').concat([stP(o.st)]),{key:o.no,file:o.file})}
+    ORDERS.unshift(o);state.hl=kind==='st'?o.no+o.sid:o.no;m.remove();render();toast(`Наказ №${o.no} збережено · ${o.file}.${eff}`)};
 }
 function renderPage(){
   const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):null;
@@ -870,10 +875,12 @@ function renderReports(tabs){
    <tr class="h"><td colspan="9">Заочна форма</td></tr>
    ${row('t','Бакалавр',by(g=>!D(g)),'zf')}
    <tr class="h"><td colspan="9">Академічна мобільність</td></tr>
-   ${row('t','Студенти за програмами мобільності',by((g,s)=>!!s.mobility),'mob')}`;
+   ${row('t','Студенти за програмами мобільності',by((g,s)=>!!s.mobility),'mob')}
+   <tr class="h"><td colspan="9">Відраховані</td></tr>
+   ${row('t','Відраховані (нараховано до дати наказу)',STUDENTS.filter(s=>s.status==='Відраховано'))}`;
   const courses=[['Денна форма',g=>D(g)],['Заочна форма',g=>!D(g)]].map(([t,f])=>`<tr class="h"><td colspan="7">${t}</td></tr>`+[1,2,3,4].map(c=>{const list=by(g=>f(g)&&g.course===c);if(!list.length)return'';const o=calc(list);const paidN=list.filter(s=>(rk!=='hostel'||s.hostel)&&s.fin!=='Бюджет'&&ledger(s,rk).sems.filter(inP).every(m=>m.left===0)).length;const pay=o.n-o.bud;const pct=pay?Math.round(paidN*100/pay):0;
     return `<tr class="s"><td class="l"><a class="xl" data-rgo="${f===D?String(c):'zf'}">${c} курс</a></td><td>${o.n}</td><td class="reg">${o.bud}</td><td class="reg">${o.fr}</td><td class="f-ok">${paidN}</td><td class="${pay-paidN?'f-bad':''}">${Math.max(0,pay-paidN)}</td><td><div class="bar" style="--p:${pct}%"><i></i><span>${pct}%</span></div></td></tr>`}).join('')).join('');
-  const T=calc(by(()=>true));
+  const T=calc(STUDENTS.filter(s=>s.status!=='Відраховано'||ledger(s,rk).tot.debt>0));
   main.innerHTML=`${header('Фінанси / Звіти',`Оплата за ${rk==='hostel'?'гуртожиток':'навчання'} · ${PER[rp]}`,`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
   <div class="filters"><label class="fld"><span>Вид оплати</span><select class="ctl" id="r-k" style="width:170px"><option value="study" ${rk==='study'?'selected':''}>Навчання</option><option value="hostel" ${rk==='hostel'?'selected':''}>Гуртожиток</option></select></label>
