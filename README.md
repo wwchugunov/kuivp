@@ -24,5 +24,5 @@ Plugins → Development → Import plugin from manifest… → `figma-plugin-cam
 Збірка: `sh scripts/build.sh` → `dist/index.html` (налаштовано в `netlify.toml`).
 
 ```bash
-npx netlify-cli deploy --prod --dir dist
+npx netlify-cli deploy --prod --dir dist   # сайт прив’язаний через .netlify/state.json (не в git); інакше додайте --site ea141f7a-164c-4680-99aa-a65d297b5612
 ```
