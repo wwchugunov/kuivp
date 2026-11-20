@@ -1,0 +1,543 @@
+<meta charset="utf-8">
+<title>Campus · Оплати</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Система адмінки Campus (з макетів Figma «Campus Learn — макети»): сайдбар 240 #1F3D31, main 40/32, сітка-таблиця з заливкою клітинок, картка деталей праворуч. Одна світла тема, як у макетах. */
+:root{
+  color-scheme:light;
+  --page:#F4F6F2; --white:#FFFFFF; --ink:#1A2420; --ink-2:#3A4440; --muted:#5B6660; --tab-off:#4A544F;
+  --brand:#184F3D; --side:#1F3D31; --side-ink:#D7E2D9; --side-cap:#A9BDB0; --avatar:#2F5A48; --logo:#D5E6BF;
+  --line:#E1E6DE; --grid:#DDE3DA; --frame:#C9D3C6; --head:#EEF2EB; --tabs:#E6EBE3; --sel:#F0F6EA; --na:#EEF1EB;
+  --ok-bg:#E3EFDA; --ok:#184F3D; --bad-bg:#FBE1D8; --bad:#8A2A12; --warn-bg:#FFF1C7; --warn:#6B4A00; --info:#1F4A7A; --info-bg:#E4ECF7;
+  --f:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{background:var(--page)}
+.side{align-self:start}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.4}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100%}
+
+/* --- сайдбар --- */
+.side{background:var(--side);padding:24px 16px;display:flex;flex-direction:column;gap:24px;position:sticky;top:0;height:100vh}
+.logo{display:flex;align-items:center;gap:10px;padding:0 8px}
+.logo i{width:34px;height:34px;border-radius:9px;background:var(--logo);color:var(--side);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:16px}
+.logo span{color:#fff;font-weight:700;font-size:17px}
+.logo b{background:var(--logo);color:var(--side);font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px}
+.sec{display:flex;flex-direction:column;gap:4px}
+.sec small{font-size:11px;font-weight:500;color:var(--side-cap);padding:0}
+.nav{display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;border-radius:6px;color:var(--side-ink);text-decoration:none;font-weight:500}
+.nav:hover{background:rgba(255,255,255,.05)}
+.nav.on{background:rgba(255,255,255,.1);color:#fff;font-weight:700}
+.nav svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.user{margin-top:auto;display:flex;gap:10px;align-items:center;padding:12px}
+.user i{width:34px;height:34px;border-radius:50%;background:var(--avatar);color:#fff;display:grid;place-items:center;font-style:normal;font-weight:600;font-size:13px}
+.user b{display:block;color:#fff;font-weight:600}
+.user small{color:var(--side-cap);font-size:12px}
+
+/* --- main --- */
+main{min-width:0;padding-block:32px 48px;padding-left:max(40px,env(safe-area-inset-left,0px));padding-right:max(40px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.header{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.crumb{font-size:13px;color:var(--muted)}
+h1{font-size:28px;font-weight:700;margin:6px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--frame);background:var(--white);color:var(--brand);font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--sel)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.pri:hover{background:#13412F}
+.btn.sm{height:34px;padding:0 12px;font-size:13px}
+.btn.wide{width:100%;justify-content:center}
+.tabs{display:inline-flex;gap:4px;padding:4px;border-radius:8px;background:var(--tabs);align-self:flex-start;max-width:100%;overflow-x:auto}
+.tabs a,.tabs button{height:40px;padding:0 16px;border-radius:6px;display:flex;align-items:center;border:0;background:none;color:var(--tab-off);font-weight:500;text-decoration:none;white-space:nowrap}
+.tabs .on{background:var(--white);color:var(--brand);font-weight:700}
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.fld{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fld>span{font-size:12px;font-weight:600;color:var(--muted)}
+.ctl{height:44px;border:1px solid var(--frame);background:var(--white);border-radius:6px;padding:0 12px;min-width:0}
+select.ctl{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0h10L5 6z' fill='%235B6660'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{height:40px;padding:0 14px;border-radius:6px;border:1px solid var(--frame);background:var(--white);color:var(--ink);font-weight:500;display:flex;align-items:center}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.card{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.caps{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:16px 0}
+.stats>div{padding:0 20px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:4px;min-width:0}
+.stats>div:first-child{border-left:0}
+.stats b{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stats .r b{color:var(--bad)} .stats .g b{color:var(--ok)}
+.agree{background:var(--white);border:1px solid var(--line);border-radius:10px;padding:16px 20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 20px;align-items:start}
+.agree ul{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--ink-2);font-size:13.5px}
+.agree b{color:var(--ink)}
+.check{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13.5px;color:var(--ink-2)}
+.check input{width:18px;height:18px;accent-color:var(--brand)}
+
+/* --- сітка-таблиця (як «Журнал» / «Відповіді студентів») --- */
+.body{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+.body.with{grid-template-columns:minmax(0,1fr) 380px}
+.tw{border:1px solid var(--frame);border-radius:10px;overflow:auto;background:var(--grid);max-height:calc(100vh - 120px)}
+table{border-collapse:separate;border-spacing:1px;font-variant-numeric:tabular-nums;width:max-content;min-width:100%;background:var(--grid);margin:-1px}
+th,td{background:var(--white);height:42px;padding:0 10px;text-align:center;white-space:nowrap;font-size:13px;font-weight:700;color:var(--ink)}
+thead th{background:var(--head);font-size:12px;font-weight:600;color:var(--muted);position:sticky;top:0;z-index:2;height:40px;padding:6px 10px;line-height:1.3}
+thead tr.g th{color:var(--ink);font-size:12.5px}
+thead tr.g th small{display:block;font-weight:500;color:var(--muted);font-size:11px}
+thead tr.g+tr th{top:41px}
+th.l,td.l{text-align:left}
+td.num,th.num{text-align:right}
+td.n{color:var(--muted);font-weight:400;width:44px;min-width:44px}
+td.nm{font-size:14px;font-weight:500;text-align:left;min-width:230px}
+td.reg{font-weight:400;color:var(--ink-2)}
+td.wrap{white-space:normal;min-width:200px;max-width:260px;text-align:left;font-weight:400;font-size:12.5px;color:var(--ink-2);padding:6px 10px}
+.st{position:sticky;z-index:1}
+thead .st{z-index:3}
+.s0{left:0}.s1{left:45px}
+td.nm a{color:inherit;text-decoration:none;cursor:pointer}
+td.nm a:hover{color:var(--brand);text-decoration:underline}
+tr.sel td:not([class*="f-"]){background:var(--sel)}
+tr.off td.nm{color:var(--muted);text-decoration:line-through}
+td.grp{background:var(--head);text-align:left;font-size:13px;font-weight:700;height:36px}
+td.grp span{font-weight:500;color:var(--muted);margin-left:10px;font-size:12px}
+td.f-ok{background:var(--ok-bg);color:var(--ok)} td.f-bad{background:var(--bad-bg);color:var(--bad)}
+td.f-warn{background:var(--warn-bg);color:var(--warn)} td.f-idle{background:var(--na);color:var(--muted);font-weight:600}
+td.f-info{background:var(--info-bg);color:var(--info)}
+td.cell{line-height:1.2;padding:4px 10px;min-width:96px}
+td.cell small{display:block;font-size:10.5px;font-weight:600;opacity:.85}
+.plus{width:30px;height:28px;border-radius:6px;border:1px dashed #9FB3A4;background:var(--white);color:var(--brand);font-weight:700}
+.plus:hover{background:var(--ok-bg);border-style:solid}
+.plus[disabled]{opacity:.3;cursor:default}
+.vbtn{border:0;background:none;color:inherit;font-weight:700;text-decoration:underline;padding:0}
+.link{color:var(--info);font-weight:500;text-decoration:underline;cursor:pointer;background:none;border:0;padding:0;font-size:12.5px}
+.pill{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.p-ok{background:var(--ok-bg);color:var(--ok)}.p-bad{background:var(--bad-bg);color:var(--bad)}.p-warn{background:var(--warn-bg);color:var(--warn)}.p-idle{background:var(--na);color:var(--muted)}.p-info{background:var(--info-bg);color:var(--info)}
+.legend{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;gap:8px;align-items:center}
+.legend i{width:30px;height:24px;border-radius:4px;border:1px solid var(--grid);display:inline-grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}
+
+/* --- картка студента праворуч --- */
+.detail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;gap:12px}
+.detail .top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.x{width:32px;height:32px;border-radius:6px;border:1px solid var(--frame);background:var(--white);font-size:18px;line-height:1;color:var(--muted)}
+.dname{font-size:18px;font-weight:700;margin:4px 0 0}
+.dsub{font-size:13px;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.hr{border-top:1px solid var(--line);margin:4px 0}
+.yr{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.yr .yl{grid-column:1/-1;display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.yr .yl b{color:var(--ink);font-weight:600}
+.sem{border-radius:6px;padding:7px 10px;font-size:12px;display:flex;flex-direction:column;gap:1px;border:1px solid var(--grid)}
+.sem b{font-size:13px}
+.sem .s-t{display:flex;justify-content:space-between;gap:6px;font-weight:600}
+.s-ok{background:var(--ok-bg);color:var(--ok)}.s-bad{background:var(--bad-bg);color:var(--bad)}.s-warn{background:var(--warn-bg);color:var(--warn)}.s-idle{background:var(--na);color:var(--muted)}.s-info{background:var(--info-bg);color:var(--info)}
+.tot{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13px}
+.tot b{text-align:right;font-variant-numeric:tabular-nums}
+.pay{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.pay:first-of-type{border-top:0}
+.pay .r1{display:flex;justify-content:space-between;gap:8px}
+.pay .r1 b{font-size:15px}
+.pay .r2{color:var(--muted);font-size:12.5px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:0}
+.facts dt{font-size:12px;color:var(--muted)}
+.facts dd{margin:0;font-size:13px;font-weight:500}
+
+/* --- модальне вікно --- */
+.modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px}
+.modal .scrim{position:absolute;inset:0;background:rgba(26,36,32,.45)}
+.modal form{position:relative;background:var(--white);border-radius:10px;box-shadow:0 6px 18px rgba(30,40,80,.12);width:min(600px,100%);max-height:100%;overflow:auto;padding:24px;display:flex;flex-direction:column;gap:16px}
+.modal h2{margin:0;font-size:20px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg .full{grid-column:1/-1}
+.fg .ctl{width:100%}
+input[type=file].ctl{padding:10px 12px;height:auto}
+.prev{background:var(--sel);border:1px solid var(--grid);border-radius:6px;padding:12px 14px;display:grid;gap:4px;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--side);color:#fff;padding:12px 16px;border-radius:8px;z-index:40;display:flex;gap:14px;align-items:center;font-size:13.5px;max-width:calc(100% - 32px);box-shadow:0 6px 18px rgba(30,40,80,.2)}
+.toast button{border:0;background:none;color:var(--logo);font-weight:700;text-decoration:underline}
+.mtop{display:none}
+.rep td.l{min-width:240px}
+.rep tr.h td{background:var(--head);text-align:left;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;height:34px}
+.rep tr.s td.l{padding-left:30px;font-weight:500}
+.rep td.l{font-weight:600}
+.bar{display:flex;align-items:center;gap:8px;min-width:160px}
+.bar i{flex:1;height:8px;border-radius:4px;background:var(--na);position:relative;overflow:hidden}
+.bar i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--p);background:#5E8A6F;border-radius:4px}
+.bar span{width:38px;text-align:right}
+@media (max-width:1180px){.body.with{grid-template-columns:minmax(0,1fr)}.detail{position:static;max-height:none}}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}.side{display:none}
+  .mtop{display:flex;align-items:center;gap:10px;background:var(--side);color:#fff;padding:12px max(16px,env(safe-area-inset-left,0px));font-weight:700}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}.stats>div:nth-child(odd){border-left:0}
+  .agree{grid-template-columns:1fr}.fg{grid-template-columns:1fr}
+  h1{font-size:24px}
+}
+</style>
+
+<div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><i>c.</i><span>campus</span><b>LEARN</b></div>
+    <div class="sec"><small>НАВЧАННЯ</small>
+      <a class="nav" href="#" data-dead><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>Журнал</a>
+      <a class="nav" href="#" data-dead><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>Тести на лекції</a>
+      <a class="nav" href="#" data-dead><svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>Домашні завдання</a>
+      <a class="nav" href="#" data-dead><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Розклад</a>
+    </div>
+    <div class="sec"><small>АДМІНІСТРУВАННЯ</small>
+      <a class="nav on" href="#history"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Оплати</a>
+      <a class="nav" href="#" data-dead><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 15l3-3 3 3 4-5"/></svg>Звіти та відповіді</a>
+    </div>
+    <div class="user"><i>ОК</i><div><b>Олена Кравець</b><small>Бухгалтерія</small></div></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script>
+(function(){
+const TODAY = new Date(2026,10,20); // 20.11.2026
+const fmt = n => new Intl.NumberFormat('uk-UA',{maximumFractionDigits:0}).format(Math.round(n)).replace(/ /g,' ');
+const grn = n => fmt(n)+' грн';
+const dstr = d => d.toLocaleDateString('uk-UA',{day:'2-digit',month:'2-digit',year:'numeric'});
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let seed=20261120; const rnd=()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const pick=a=>a[Math.floor(rnd()*a.length)];
+
+/* ---------- Тарифи (з таблиці контингенту + відомості) ---------- */
+const GROUPS=[
+ {id:'SUD',name:'СУД 8/24 БД',spec:'Право · судова діяльність',okr:'Бакалавр',form:'Денна',unit:'Інститут · факультет права',course:3,start:2025,tariffs:[36050,37050,37050,37050]},
+ {id:'CGU',name:'ЦГЮ 7/24 БД',spec:'Право · цивільно-господарська юстиція',okr:'Бакалавр',form:'Денна',unit:'Інститут · факультет права',course:3,start:2025,tariffs:[31050,34200,37620,41400]},
+ {id:'KK',name:'КК-ПД 1/26',spec:'Правоохоронна діяльність',okr:'Коледж',form:'Денна',unit:'Коледж · Київ',course:1,start:2026,tariffs:[54500,54500,54500]},
+ {id:'ZF',name:'ПД 3/25 ЗФ',spec:'Право',okr:'Бакалавр',form:'Заочна',unit:'Інститут · факультет права',course:2,start:2025,tariffs:[36500,36500,38000,38000]},
+];
+const yearLabel=y=>`${y}–${y+1}`;
+GROUPS.forEach(g=>{g.years=g.tariffs.map((t,i)=>g.start+i);g.total=g.tariffs.reduce((a,b)=>a+b,0)});
+const gById=Object.fromEntries(GROUPS.map(g=>[g.id,g]));
+function semsOf(g){const out=[];g.years.forEach((y,i)=>{const half=g.tariffs[i]/2;
+  out.push({key:y+'-1',year:y,n:1,label:`І сем ${yearLabel(y)}`,amount:half,due:new Date(y,6,1),dueTxt:'до 01.07.'+y});
+  out.push({key:y+'-2',year:y,n:2,label:`ІІ сем ${yearLabel(y)}`,amount:g.tariffs[i]-half,due:new Date(y,11,20),dueTxt:'до 20.12.'+y});});return out}
+
+/* ---------- Студенти (вигадані імена, приклад) ---------- */
+const NAMES={SUD:['Андрієнко Софія Олегівна','Бойко Максим Ігорович','Гаврилюк Діана Сергіївна','Дорошенко Артем Віталійович','Костенко Ярослава Петрівна','Лисенко Назар Андрійович','Мороз Вікторія Олександрівна'],
+ CGU:['Онищенко Аліна Романівна','Панченко Денис Юрійович','Руденко Ілона Миколаївна','Савченко Богдан Тарасович','Тимошенко Мар\'яна Ігорівна','Устименко Олег Васильович'],
+ KK:['Федоренко Єлизавета Олегівна','Харченко Матвій Дмитрович','Цимбал Анастасія Сергіївна','Шевченко Владислав Ігорович','Юрченко Поліна Андріївна','Яковенко Кирило Олександрович','Захарченко Олеся Михайлівна'],
+ ZF:['Білик Роман Степанович','Вакуленко Ірина Василівна','Гнатюк Тетяна Олегівна','Кравчук Ігор Петрович','Мельничук Оксана Іванівна']};
+const SPECIAL={ // особливі випадки, щоб показати логіку
+ 'Гаврилюк Діана Сергіївна':{benefit:'Дитина ветерана — оплачує Мінветеранів',payer:'Мінветеранів'},
+ 'Лисенко Назар Андрійович':{status:'Відраховано',statusNote:'15.10.2026, наказ №412-с, невиконання умов договору'},
+ 'Савченко Богдан Тарасович':{fin:'Бюджет'},
+ 'Тимошенко Мар\'яна Ігорівна':{mobility:'Чернівці'},
+ 'Юрченко Поліна Андріївна':{status:'Академвідпустка',statusNote:'з 01.10.2026, наказ №398-с'},
+ 'Кравчук Ігор Петрович':{transfer:'Переведено з денної на заочну, 01.09.2026, наказ №301-с'},
+};
+const METHODS=['Застосунок · картка','Застосунок · картка','Застосунок · картка','Квитанція','Банківська виписка'];
+const OPS=['Олена Кравець','Ірина Мазур'];
+let STUDENTS=[],PAYMENTS=[],pid=1;
+GROUPS.forEach(g=>NAMES[g.id].forEach((name,i)=>{
+  const sp=SPECIAL[name]||{};
+  const by=1999+Math.floor(rnd()*8)+(g.okr==='Коледж'?8:0)-(g.form==='Заочна'?12:0);
+  const s={id:g.id+'-'+(i+1),name,group:g.id,fin:sp.fin||'Контракт',status:sp.status||'Навчається',statusNote:sp.statusNote||'',benefit:sp.benefit||'',mobility:sp.mobility||'',transfer:sp.transfer||'',
+    birth:new Date(by,Math.floor(rnd()*12),1+Math.floor(rnd()*27)),sex:/вна$|ївна$|на$/.test(name)?'Ж':'Ч',
+    order:`Наказ №${120+Math.floor(rnd()*200)}-с від 25.08.${g.start}`,note:'',payer:sp.payer||''};
+  STUDENTS.push(s);
+  if(s.fin==='Бюджет')return;
+  const sems=semsOf(g); const r=rnd(); // профіль платника
+  const profile = sp.payer?'state': r<.12?'debtor': r<.25?'partial': r<.45?'yearly':'good';
+  for(let k=0;k<sems.length;k++){
+    const m=sems[k]; if(s.status==='Відраховано' && m.due>new Date(2026,9,15))break;
+    if(s.status==='Академвідпустка' && m.due>new Date(2026,8,30))break;
+    const due=m.due<=TODAY; const early=rnd()<.35;
+    if(!due && !early && profile!=='state')continue;
+    if(m.due>new Date(2026,11,31))break;
+    if(profile==='debtor' && m.year>=2026)continue;
+    if(profile==='yearly' && m.n===2)continue;
+    let amt=m.amount, alloc=[{key:m.key,amount:m.amount}];
+    if(profile==='yearly'&&m.n===1){const m2=sems[k+1];if(m2&&(m2.due<=TODAY||rnd()<.7)){amt+=m2.amount;alloc.push({key:m2.key,amount:m2.amount})}}
+    if(profile==='partial'&&m.year===2026&&m.n===1){amt=Math.round(m.amount*.5/100)*100;alloc=[{key:m.key,amount:amt}]}
+    const pd=new Date(m.due.getTime()-Math.floor(rnd()*25)*864e5);
+    const method=profile==='state'?'Банківська виписка':pick(METHODS);
+    PAYMENTS.push({id:pid++,sid:s.id,date:pd>TODAY?new Date(2026,10,12):pd,amount:amt,alloc,method,
+      payer:profile==='state'?'Мінветеранів':(method.startsWith('Застосунок')?pick(['Студент','Батьки (за посиланням)','Студент']):pick(['Студент','Батьки'])),
+      receipt:method==='Квитанція'?`квитанція_${String(pid).padStart(4,'0')}.pdf`:(method.startsWith('Застосунок')?`чек_${String(pid).padStart(6,'0')}`:'виписка '+dstr(pd).slice(0,5)),
+      verified:method!=='Квитанція'||rnd()<.6,by:method.startsWith('Застосунок')||method.startsWith('Банк')?'Автоматично':pick(OPS),note:profile==='state'?'Договір з Мінветеранів №17/2025':''});
+  }
+}));
+STUDENTS.find(s=>s.name.startsWith('Дорошенко')).note='Розстрочка до 01.12 — погоджено деканом';
+
+/* ---------- розрахунки ---------- */
+function paidMap(sid){const m={};PAYMENTS.filter(p=>p.sid===sid).forEach(p=>p.alloc.forEach(a=>m[a.key]=(m[a.key]||0)+a.amount));return m}
+function ledger(s){
+  const g=gById[s.group], pm=paidMap(s.id);
+  const sems=semsOf(g).map(m=>{
+    const paid=pm[m.key]||0;
+    const stopped=(s.status==='Відраховано'&&m.due>new Date(2026,9,15))||(s.status==='Академвідпустка'&&m.due>new Date(2026,8,30));
+    let st,cls;
+    if(s.fin==='Бюджет'){st='Бюджет';cls='info'}
+    else if(stopped){st=s.status==='Відраховано'?'Не нараховано':'Пауза (академ)';cls='idle'}
+    else if(paid>=m.amount){st=paid>m.amount?'Переплата':'Сплачено';cls='ok'}
+    else if(paid>0){st=m.due<=TODAY?'Частково · борг':'Частково';cls='warn'}
+    else if(m.due<=TODAY){st='Борг';cls='bad'}
+    else {st='Очікується';cls='idle'}
+    const charge=(s.fin==='Бюджет'||stopped)?0:m.amount;
+    return {...m,paid,charge,st,cls,debt:m.due<=TODAY?Math.max(0,charge-paid):0,left:Math.max(0,charge-paid)};
+  });
+  const tot={charge:0,paid:0,left:0,debt:0};sems.forEach(m=>{tot.charge+=m.charge;tot.paid+=m.paid;tot.left+=m.left;tot.debt+=m.debt});
+  return {g,sems,tot};
+}
+function rowStatus(s,L,year){
+  if(s.fin==='Бюджет')return['Бюджет','info'];
+  const ss=year?L.sems.filter(m=>m.year===year):L.sems;
+  const debt=ss.reduce((a,m)=>a+m.debt,0), left=ss.reduce((a,m)=>a+m.left,0), paid=ss.reduce((a,m)=>a+m.paid,0);
+  if(s.status==='Відраховано')return debt>0?['Відраховано · борг '+fmt(debt),'bad']:['Відраховано','idle'];
+  if(debt>0)return['Борг '+fmt(debt),'bad'];
+  if(left===0)return[year?'Сплачено за рік':'Сплачено все','ok'];
+  if(paid>0)return['Сплачено вчасно','ok'];
+  return['Очікується','idle'];
+}
+
+
+/* ---------- стан ---------- */
+const state={view:'history',mode:'year',year:2026,q:'',group:'',form:'',pay:'',cont:false,sel:null};
+try{state.cont=localStorage.getItem('opl-cont')==='1'}catch(e){}
+const $=s=>document.querySelector(s);
+const main=$('#main');
+const pill=(t,c)=>`<span class="pill p-${c}">${esc(t)}</span>`;
+const studyPill=s=>pill(s.status,s.status==='Навчається'?'ok':s.status==='Відраховано'?'bad':'warn');
+
+function nav(){
+  const v=(location.hash||'#history').slice(1);state.view=['history','tariffs','reports'].includes(v)?v:'history';render();
+}
+function render(){
+  const tabs=`<nav class="tabs" aria-label="Розділи оплат">${[['history','Історія оплат'],['tariffs','Тарифи'],['reports','Звіти']].map(([k,t])=>`<a href="#${k}" class="${state.view===k?'on':''}">${t}</a>`).join('')}</nav>`;
+  ({history:renderHistory,tariffs:renderTariffs,reports:renderReports})[state.view](tabs);
+}
+function header(crumb,title,btns){return `<div class="header"><div><div class="crumb">${crumb}</div><h1>${title}</h1></div><div class="btns">${btns}</div></div>`}
+
+/* ---------- ІСТОРІЯ ОПЛАТ ---------- */
+function filtered(){
+  return STUDENTS.filter(s=>{const g=gById[s.group];
+    if(state.q&&!(s.name+' '+g.name).toLowerCase().includes(state.q.toLowerCase()))return false;
+    if(state.group&&s.group!==state.group)return false;
+    if(state.form&&g.form!==state.form)return false;
+    if(state.mode==='year'&&!g.years.includes(state.year))return false;
+    if(state.pay){const L=ledger(s);const ss=state.mode==='year'?L.sems.filter(m=>m.year===state.year):L.sems;
+      const debt=ss.reduce((a,m)=>a+m.debt,0),left=ss.reduce((a,m)=>a+m.left,0);
+      if(state.pay==='debt'&&!(debt>0))return false;
+      if(state.pay==='paid'&&!(left===0&&s.fin!=='Бюджет'))return false;
+      if(state.pay==='verify'&&!PAYMENTS.some(p=>p.sid===s.id&&!p.verified))return false;
+      if(state.pay==='budget'&&s.fin!=='Бюджет'&&!s.benefit)return false;}
+    return true});
+}
+function renderHistory(tabs){
+  const list=filtered();const years=[...new Set(GROUPS.flatMap(g=>g.years))].sort();
+  const K={n:list.length,charge:0,paid:0,debt:0,debtors:0};
+  list.forEach(s=>{const L=ledger(s);const ss=state.mode==='year'?L.sems.filter(m=>m.year===state.year):L.sems;
+    K.charge+=ss.reduce((a,m)=>a+m.charge,0);K.paid+=ss.reduce((a,m)=>a+m.paid,0);const d=ss.reduce((a,m)=>a+m.debt,0);K.debt+=d;if(d>0)K.debtors++});
+  let hideNote=false;try{hideNote=localStorage.getItem('opl-note')==='1'}catch(e){}
+  main.innerHTML=`
+  ${header(`Оплати / ${state.mode==='year'?yearLabel(state.year)+' навчальний рік':'весь термін навчання'}`,'Історія оплат',
+    `<button class="btn" data-act="import">Імпорт виписки банку</button><button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="pay">+ Внести оплату</button>`)}
+  ${tabs}
+  ${hideNote?'':`<div class="agree"><div style="display:flex;flex-direction:column;gap:8px"><div class="caps">Для погодження · що змінилось</div><ul>
+    <li><b>Одна таблиця замість двох:</b> контингент (форма, фінансування, статус, пільга, накази) і оплати — в одному рядку студента.</li>
+    <li><b>Оплати на весь термін:</b> кожному студенту нараховано всі семестри від вступу до випуску за тарифами його набору.</li>
+    <li><b>Колонки — як у відомості бухгалтерії:</b> режим «Навчальний рік» повторює вашу відомість, експорт у Excel — у тих самих колонках.</li>
+    <li><b>Оплати із застосунку й банку з’являються самі,</b> оператор вносить лише квитанції; переплата переходить на наступний семестр.</li></ul></div>
+    <button class="btn sm" data-act="hidenote">Сховати</button></div>`}
+  <div class="filters">
+    <div class="fld"><span>Вигляд</span><div class="chips"><button class="chip ${state.mode==='year'?'on':''}" data-mode="year">Навчальний рік</button><button class="chip ${state.mode==='term'?'on':''}" data-mode="term">Весь термін навчання</button></div></div>
+    ${state.mode==='year'?`<label class="fld"><span>Навчальний рік</span><select class="ctl" id="f-year" style="width:140px">${years.map(y=>`<option value="${y}" ${y===state.year?'selected':''}>${yearLabel(y)}</option>`).join('')}</select></label>`:''}
+    <label class="fld"><span>Група</span><select class="ctl" id="f-group" style="width:160px"><option value="">Усі групи</option>${GROUPS.map(g=>`<option value="${g.id}" ${state.group===g.id?'selected':''}>${g.name}</option>`).join('')}</select></label>
+    <label class="fld"><span>Форма</span><select class="ctl" id="f-form" style="width:150px"><option value="">Денна і заочна</option><option ${state.form==='Денна'?'selected':''}>Денна</option><option ${state.form==='Заочна'?'selected':''}>Заочна</option></select></label>
+    <label class="fld"><span>Статус оплати</span><select class="ctl" id="f-pay" style="width:200px"><option value="">Усі</option>${[['debt','Мають борг'],['paid','Сплачено повністю'],['verify','Квитанції на звірку'],['budget','Бюджет і пільги']].map(([v,t])=>`<option value="${v}" ${state.pay===v?'selected':''}>${t}</option>`).join('')}</select></label>
+    <label class="fld" style="flex:1 1 200px"><span>Пошук</span><input class="ctl" id="f-q" placeholder="ПІБ або група" value="${esc(state.q)}"></label>
+  </div>
+  <div class="card stats">
+    <div><span class="caps">Студентів</span><b>${K.n}</b></div>
+    <div><span class="caps">Нараховано</span><b>${grn(K.charge)}</b></div>
+    <div class="g"><span class="caps">Сплачено</span><b>${grn(K.paid)}</b></div>
+    <div class="r"><span class="caps">Борг на сьогодні</span><b>${grn(K.debt)}</b></div>
+    <div><span class="caps">Боржників</span><b>${K.debtors}</b></div>
+  </div>
+  <label class="check"><input type="checkbox" id="c-cont" ${state.cont?'checked':''}> Показати колонки контингенту: курс, форма, фінансування, ОКР, пільга, мобільність, дата народження, стать, накази</label>
+  <div class="body ${state.sel?'with':''}">
+    <div class="tw">${state.mode==='year'?yearTable(list):termTable(list)}</div>
+    ${state.sel?detailHtml(state.sel):''}
+  </div>
+  <div class="legend"><span><i style="background:var(--ok-bg);color:var(--ok)">✓</i>сплачено</span><span><i style="background:var(--warn-bg);color:var(--warn)">½</i>частково</span><span><i style="background:var(--bad-bg);color:var(--bad)">!</i>борг, термін минув</span><span><i style="background:var(--na)"></i>ще не настав термін</span><span><i style="background:var(--info-bg);color:var(--info)">Б</i>бюджет</span><span><i style="border-style:dashed;color:var(--brand)">＋</i>внести повну оплату найближчого семестру</span></div>`;
+  bindHistory();
+}
+const CONT=['Курс','Форма','Фінансування','ОКР','Пільга','Акад. мобільність','Дата народження','Повних років','Стать','Зарахування','Відрахування / переведення'];
+const contHead=()=>state.cont?CONT.map(t=>`<th rowspan="2">${t}</th>`).join(''):'';
+function contCells(s){if(!state.cont)return'';const g=gById[s.group];const age=Math.floor((TODAY-s.birth)/(365.25*864e5));
+  return [g.course,g.form,s.fin,g.okr,s.benefit||'—',s.mobility||'—',dstr(s.birth),age,s.sex,s.order,[s.statusNote,s.transfer].filter(Boolean).join('; ')||'—'].map(v=>`<td class="reg">${esc(v)}</td>`).join('')}
+function rowsFor(s){return PAYMENTS.filter(p=>p.sid===s.id)}
+function yearTable(list){
+  const y=state.year,nc=state.cont?CONT.length:0;
+  let h=`<table><thead><tr class="g"><th class="st s0" rowspan="2">№</th><th class="st s1 l" rowspan="2" style="min-width:230px">Студент</th><th rowspan="2">Група</th>${contHead()}<th rowspan="2">Оплата<br>+/−</th>
+   <th colspan="3">І семестр ${yearLabel(y)}<small>термін оплати до 01.07.${y}</small></th><th colspan="3">ІІ семестр ${yearLabel(y)}<small>термін оплати до 20.12.${y}</small></th>
+   <th colspan="4">За рік ${yearLabel(y)}</th><th rowspan="2">Квитанція</th><th rowspan="2">Звірка</th><th rowspan="2" class="l">Примітка</th><th rowspan="2">Статус навчання</th></tr>
+   <tr><th>Нараховано, грн</th><th>Сплачено, грн</th><th>Дата оплати</th><th>Нараховано, грн</th><th>Сплачено, грн</th><th>Дата оплати</th>
+   <th>Тариф за рік, грн</th><th>Сплачено, грн</th><th>Залишок, грн</th><th>Статус оплати</th></tr></thead><tbody>`;
+  let i=0,lastG='';
+  list.forEach(s=>{const L=ledger(s),g=L.g;
+    if(g.id!==lastG){lastG=g.id;h+=`<tr><td class="grp st s0"></td><td class="grp st s1">${g.name}</td><td class="grp" colspan="${17+nc}"><span style="margin:0">${g.spec} · ${g.okr} · ${g.form} · ${g.course} курс · тариф ${yearLabel(y)}: ${grn(g.tariffs[g.years.indexOf(y)]||0)}</span></td></tr>`}
+    const ss=L.sems.filter(m=>m.year===y),[a,b]=ss;const ps=rowsFor(s).filter(p=>p.alloc.some(x=>ss.some(m=>m.key===x.key))).sort((p,q)=>q.date-p.date);
+    const dateOf=k=>{const p=rowsFor(s).filter(p=>p.alloc.some(x=>x.key===k)).sort((p,q)=>q.date-p.date)[0];return p?dstr(p.date):''};
+    const yc=ss.reduce((x,m)=>x+m.charge,0),yp=ss.reduce((x,m)=>x+m.paid,0);const [stT,stC]=rowStatus(s,L,y);
+    const next=L.sems.find(m=>m.left>0&&m.charge>0);const unver=ps.filter(p=>!p.verified);const rec=ps[0];
+    const charge=m=>m.charge?`<td class="num">${fmt(m.charge)}</td>`:`<td class="f-${m.cls==='info'?'info':'idle'}">${m.cls==='info'?'бюджет':'—'}</td>`;
+    const paid=m=>`<td class="num f-${m.cls}">${m.paid?fmt(m.paid):(m.cls==='bad'?'0':m.cls==='idle'||m.cls==='info'?'—':'')}</td>`;
+    h+=`<tr class="${state.sel===s.id?'sel':''} ${s.status==='Відраховано'?'off':''}"><td class="st s0 n">${++i}</td><td class="st s1 nm"><a data-open="${s.id}">${esc(s.name)}</a></td><td class="reg">${g.name}</td>${contCells(s)}
+      <td><button class="plus" title="${next?'Внести '+grn(next.left)+' · '+next.label:'Немає нарахувань'}" data-plus="${s.id}" ${next?'':'disabled'}>＋</button></td>
+      ${charge(a)}${paid(a)}<td class="reg">${dateOf(a.key)}</td>${charge(b)}${paid(b)}<td class="reg">${dateOf(b.key)}</td>
+      <td class="num">${yc?fmt(yc):'—'}</td><td class="num">${fmt(yp)}</td><td class="num">${fmt(Math.max(0,yc-yp))}</td><td class="f-${stC}">${esc(stT)}</td>
+      <td>${rec?`<button class="link" data-open="${s.id}">${esc(rec.receipt)}</button>`:''}</td>
+      <td class="${!ps.length?'':unver.length?'f-warn':'f-ok'}">${!ps.length?'':unver.length?`<button class="vbtn" data-verify="${unver[0].id}">Звірити</button>`:'✓'}</td>
+      <td class="wrap">${esc([s.benefit,s.note,rec&&rec.note].filter(Boolean).join('; '))}</td><td>${studyPill(s)}</td></tr>`});
+  if(!list.length)h+=`<tr><td colspan="30" class="reg" style="height:80px">Нікого не знайдено. Змініть фільтри або пошук.</td></tr>`;
+  return h+'</tbody></table>';
+}
+function termTable(list){
+  const nc=state.cont?CONT.length:0;
+  let h=`<table><thead><tr class="g"><th class="st s0" rowspan="2">№</th><th class="st s1 l" rowspan="2" style="min-width:230px">Студент</th><th rowspan="2">Група</th>${contHead()}
+   ${[1,2,3,4].map(i=>`<th colspan="2">${i}-й рік навчання</th>`).join('')}<th colspan="5">Весь термін</th></tr><tr>
+   ${[1,2,3,4].map(()=>`<th>І сем</th><th>ІІ сем</th>`).join('')}<th>Тариф, грн</th><th>Сплачено, грн</th><th>Залишок, грн</th><th>Борг на сьогодні, грн</th><th>Статус</th></tr></thead><tbody>`;
+  let i=0,lastG='';
+  list.forEach(s=>{const L=ledger(s),g=L.g;
+    if(g.id!==lastG){lastG=g.id;h+=`<tr><td class="grp st s0"></td><td class="grp st s1">${g.name}</td><td class="grp" colspan="${14+nc}"><span style="margin:0">${g.okr} · ${g.form} · ${yearLabel(g.years[0])} — ${yearLabel(g.years.at(-1))} · тариф за термін ${grn(g.total)}</span></td></tr>`}
+    const [stT,stC]=rowStatus(s,L,null);
+    h+=`<tr class="${state.sel===s.id?'sel':''} ${s.status==='Відраховано'?'off':''}"><td class="st s0 n">${++i}</td><td class="st s1 nm"><a data-open="${s.id}">${esc(s.name)}</a></td><td class="reg">${g.name}</td>${contCells(s)}`;
+    [0,1,2,3].forEach(yi=>[1,2].forEach(n=>{const m=yi<g.years.length&&L.sems.find(x=>x.year===g.years[yi]&&x.n===n);
+      h+=m?`<td class="cell f-${m.cls}">${m.paid?fmt(m.paid):(m.charge?fmt(m.charge):'—')}<small>${m.st}</small></td>`:`<td class="f-idle cell" style="font-weight:500">—<small>не передбачено</small></td>`}));
+    h+=`<td class="num">${fmt(L.tot.charge)}</td><td class="num">${fmt(L.tot.paid)}</td><td class="num">${fmt(L.tot.left)}</td><td class="num ${L.tot.debt?'f-bad':''}">${fmt(L.tot.debt)}</td><td class="f-${stC}">${esc(stT)}</td></tr>`});
+  return h+'</tbody></table>';
+}
+function bindHistory(){
+  main.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{state.mode=b.dataset.mode;render()});
+  const on=(id,k,num)=>{const el=$('#'+id);if(!el)return;el.oninput=el.onchange=()=>{state[k]=num?+el.value:el.value;
+    if(id==='f-q'){const p=el.selectionStart;render();const n=$('#f-q');n.focus();n.setSelectionRange(p,p)}else render()}};
+  on('f-year','year',1);on('f-group','group');on('f-form','form');on('f-pay','pay');on('f-q','q');
+  $('#c-cont').onchange=e=>{state.cont=e.target.checked;try{localStorage.setItem('opl-cont',state.cont?'1':'0')}catch(_){}render()};
+}
+
+/* ---------- КАРТКА СТУДЕНТА (праворуч, як «Відповіді студента») ---------- */
+function detailHtml(id){
+  const s=STUDENTS.find(x=>x.id===id),L=ledger(s),g=L.g,age=Math.floor((TODAY-s.birth)/(365.25*864e5));
+  const ps=rowsFor(s).sort((a,b)=>b.date-a.date);const semL=k=>L.sems.find(m=>m.key===k).label;const [rs,rc]=rowStatus(s,L,null);
+  return `<aside class="card detail" aria-label="Картка студента">
+   <div class="top"><div><div class="caps">Картка студента</div><div class="dname">${esc(s.name)}</div><div class="dsub">${g.name} · ${g.okr} · ${g.form} · ${g.course} курс</div></div><button class="x" data-close aria-label="Закрити">×</button></div>
+   <div class="pills">${studyPill(s)}${pill(s.fin,s.fin==='Бюджет'?'info':'idle')}${s.benefit?pill('Пільга','info'):''}${pill(rs,rc)}</div>
+   ${s.fin!=='Бюджет'&&s.status!=='Відраховано'?`<div style="display:grid;gap:8px"><button class="btn pri wide" data-act="pay" data-sid="${id}">+ Внести оплату</button><button class="btn wide" data-act="link">Посилання на оплату для батьків</button></div>`:''}
+   <div class="hr"></div>
+   <div class="caps">Графік оплат · ${g.years.length} ${g.years.length>4?'років':'роки'} (${yearLabel(g.years[0])} — ${yearLabel(g.years.at(-1))})</div>
+   ${g.years.map((y,i)=>{const ss=L.sems.filter(m=>m.year===y);const c=ss.reduce((a,m)=>a+m.charge,0),p=ss.reduce((a,m)=>a+m.paid,0);
+     return `<div class="yr"><div class="yl"><span>${i+1}-й рік · ${yearLabel(y)}</span><b>${fmt(p)} / ${fmt(c)}</b></div>${ss.map(m=>`<div class="sem s-${m.cls}"><div class="s-t"><span>${m.n===1?'І':'ІІ'} сем</span><span>${m.st}</span></div><b>${m.charge?fmt(m.paid)+' / '+fmt(m.charge):'—'}</b><span>${m.dueTxt}</span></div>`).join('')}</div>`}).join('')}
+   <div class="tot"><span>Тариф за термін</span><b>${grn(L.tot.charge)}</b><span>Сплачено</span><b>${grn(L.tot.paid)}</b><span>Залишок до випуску</span><b>${grn(L.tot.left)}</b><span style="color:var(--bad)">Борг на сьогодні</span><b style="color:var(--bad)">${grn(L.tot.debt)}</b></div>
+   <div class="hr"></div>
+   <div class="caps">Історія оплат</div>
+   <div>${ps.length?ps.map(p=>`<div class="pay"><div class="r1"><span>${dstr(p.date)}</span><b>${grn(p.amount)}</b></div>
+      <div>${p.alloc.map(a=>semL(a.key)+(p.alloc.length>1?' — '+fmt(a.amount):'')).join(', ')}</div>
+      <div class="r2">${p.method} · платник: ${esc(p.payer)} · вніс: ${p.by}</div>
+      <div class="r1"><span class="link">${esc(p.receipt)}</span>${p.verified?'<span class="pill p-ok">✓ Звірено</span>':`<button class="pill p-warn" style="border:0" data-verify="${p.id}">Звірити</button>`}</div>
+      ${p.note?`<div class="r2">${esc(p.note)}</div>`:''}</div>`).join(''):`<div class="dsub">${s.fin==='Бюджет'?'Навчається за бюджетом — оплати не нараховуються.':'Оплат ще немає.'}</div>`}</div>
+   <div class="hr"></div>
+   <div class="caps">Контингент</div>
+   <dl class="facts">${[['Фінансування',s.fin],['Підрозділ',g.unit],['Пільгова категорія',s.benefit||'—'],['Акад. мобільність',s.mobility||'—'],['Дата народження',dstr(s.birth)+' · '+age+' р.'],['Стать',s.sex==='Ж'?'Жінка':'Чоловік'],['Зарахування',s.order],['Відрахування / академвідпустка',s.statusNote||'—'],['Поновлення / переведення',s.transfer||'—']].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+  </aside>`;
+}
+
+/* ---------- ВНЕСТИ ОПЛАТУ ---------- */
+function allocate(s,fromKey,amount){const L=ledger(s);const idx=Math.max(0,L.sems.findIndex(m=>m.key===fromKey));const out=[];let rest=amount;
+  for(let k=idx;k<L.sems.length&&rest>0;k++){const m=L.sems[k];if(!m.charge)continue;const t=Math.min(rest,m.left);if(t>0){out.push({key:m.key,amount:t,label:m.label,full:t===m.left});rest-=t}}return{out,rest}}
+function openPay(sid){
+  document.querySelector('.modal')?.remove();
+  const payable=STUDENTS.filter(s=>s.fin!=='Бюджет'&&s.status!=='Відраховано');const s=payable.find(x=>x.id===sid)||payable[0];
+  const open=ledger(s).sems.filter(m=>m.left>0);
+  const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="scrim" data-mclose></div>
+  <form id="payf"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2>Внести оплату</h2><button type="button" class="x" data-mclose aria-label="Закрити">×</button></div>
+   <div class="fg">
+    <label class="fld full"><span>Студент</span><select class="ctl" id="p-s">${payable.map(x=>`<option value="${x.id}" ${x.id===s.id?'selected':''}>${esc(x.name)} · ${gById[x.group].name}</option>`).join('')}</select></label>
+    <label class="fld"><span>Зарахувати з періоду</span><select class="ctl" id="p-k">${open.map(x=>`<option value="${x.key}">${x.label} · залишок ${fmt(x.left)}</option>`).join('')}</select></label>
+    <label class="fld"><span>Сума, грн</span><input class="ctl" id="p-a" inputmode="numeric" value="${open[0]?open[0].left:0}"></label>
+    <label class="fld"><span>Дата оплати</span><input class="ctl" id="p-d" type="date" value="2026-11-20"></label>
+    <label class="fld"><span>Спосіб</span><select class="ctl" id="p-m"><option>Квитанція</option><option>Банківська виписка</option><option>Каса</option></select></label>
+    <label class="fld"><span>Платник</span><select class="ctl" id="p-p"><option>Студент</option><option>Батьки</option><option>Мінветеранів</option><option>Роботодавець</option></select></label>
+    <label class="fld"><span>Квитанція (PDF або фото)</span><input class="ctl" id="p-f" type="file" accept=".pdf,.jpg,.jpeg,.png"></label>
+    <label class="fld full"><span>Примітка</span><input class="ctl" id="p-n" placeholder="Напр.: розстрочка, погоджено деканом"></label>
+   </div>
+   <div class="prev" id="p-prev"></div>
+   <div class="btns" style="justify-content:flex-end"><button type="button" class="btn" data-mclose>Скасувати</button><button class="btn pri" type="submit">Зберегти оплату</button></div></form>`;
+  document.body.appendChild(m);
+  const amt=()=>+String($('#p-a').value).replace(/\s/g,'')||0;
+  const upd=()=>{const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();const {out,rest}=allocate(st,$('#p-k').value,a);
+    $('#p-prev').innerHTML=a<=0?'Вкажіть суму оплати.':`<span class="caps">Буде зараховано</span>${out.map(o=>`<span>• <b>${o.label}</b> — ${grn(o.amount)} ${o.full?'(закриває семестр)':'(частково)'}</span>`).join('')}${rest>0?`<span style="color:var(--warn)">• Переплата ${grn(rest)} — залишиться на балансі студента</span>`:''}<span style="color:var(--muted)">Квитанція буде позначена «Звірити», доки бухгалтер не підтвердить її випискою.</span>`};
+  $('#p-s').onchange=e=>openPay(e.target.value);
+  ['p-k','p-a'].forEach(i=>{$('#'+i).oninput=upd;$('#'+i).onchange=upd});upd();
+  m.addEventListener('click',e=>{if(e.target.closest('[data-mclose]'))m.remove()});
+  $('#payf').onsubmit=e=>{e.preventDefault();const st=STUDENTS.find(x=>x.id===$('#p-s').value);const a=amt();if(a<=0)return;
+    const {out}=allocate(st,$('#p-k').value,a);const f=$('#p-f').files[0];
+    const p={id:pid++,sid:st.id,date:new Date($('#p-d').value||'2026-11-20'),amount:a,alloc:out.map(o=>({key:o.key,amount:o.amount})),method:$('#p-m').value,payer:$('#p-p').value,receipt:f?f.name:'квитанція_'+pid+'.pdf',verified:$('#p-m').value!=='Квитанція',by:'Олена Кравець',note:$('#p-n').value};
+    PAYMENTS.push(p);m.remove();state.sel=st.id;render();toast(`Внесено ${grn(a)} · ${st.name.split(' ').slice(0,2).join(' ')}`,()=>{PAYMENTS=PAYMENTS.filter(x=>x!==p);render()})};
+}
+function quickPlus(sid){const s=STUDENTS.find(x=>x.id===sid);const m=ledger(s).sems.find(x=>x.left>0&&x.charge>0);if(!m)return;
+  const p={id:pid++,sid,date:new Date(TODAY),amount:m.left,alloc:[{key:m.key,amount:m.left}],method:'Квитанція',payer:'Студент',receipt:'квитанція_'+pid+'.pdf',verified:false,by:'Олена Кравець',note:''};
+  PAYMENTS.push(p);render();toast(`Внесено ${grn(m.left)} · ${m.label} · ${s.name.split(' ').slice(0,2).join(' ')}`,()=>{PAYMENTS=PAYMENTS.filter(x=>x!==p);render()})}
+
+/* ---------- ТАРИФИ ---------- */
+function renderTariffs(tabs){
+  main.innerHTML=`${header('Оплати / Тарифи','Тарифи навчання',`<button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="soon">+ Додати тариф</button>`)}
+  ${tabs}
+  <div class="dsub" style="max-width:760px">Тариф задається для набору на весь термін навчання. Зміна тарифу перераховує залишки всіх студентів групи. Сума семестру — половина річного тарифу.</div>
+  <div class="tw"><table><thead><tr><th class="st s0">№</th><th class="l">Група · набір</th><th class="l">Спеціальність</th><th>ОКР · форма</th><th>Термін</th>${[1,2,3,4].map(i=>`<th>${i}-й рік, грн</th>`).join('')}<th>За термін, грн</th><th>Терміни оплати</th><th>Студентів</th></tr></thead><tbody>
+   ${GROUPS.map((g,i)=>`<tr><td class="st s0 n">${i+1}</td><td class="l">${g.name}<div style="font-weight:400;color:var(--muted);font-size:12px">набір ${g.start}</div></td><td class="l reg">${g.spec}</td><td class="reg">${g.okr} · ${g.form}</td><td class="reg">${yearLabel(g.years[0])} — ${yearLabel(g.years.at(-1))}</td>
+    ${[0,1,2,3].map(k=>g.tariffs[k]?`<td class="num" style="line-height:1.25;padding:6px 10px">${fmt(g.tariffs[k])}<div style="font-weight:400;color:var(--muted);font-size:11.5px">${yearLabel(g.years[k])} · сем ${fmt(g.tariffs[k]/2)}</div></td>`:`<td class="f-idle">—</td>`).join('')}
+    <td class="num">${fmt(g.total)}</td><td class="reg" style="line-height:1.3;padding:6px 10px">І сем — до 01 липня<br>ІІ сем — до 20 грудня</td><td>${STUDENTS.filter(s=>s.group===g.id).length}</td></tr>`).join('')}</tbody></table></div>
+  <div class="caps" style="margin-top:8px">Знижки й пільги</div>
+  <div class="tw" style="align-self:flex-start"><table><thead><tr><th class="l">Категорія</th><th class="l">Умова</th><th class="l">Хто платить</th><th>Студентів</th></tr></thead><tbody>
+   <tr><td class="l">Дитина ветерана</td><td class="l reg">100% вартості</td><td class="l reg">Мінветеранів, за договором</td><td>1</td></tr>
+   <tr><td class="l">Бюджет</td><td class="l reg">нарахування не формуються</td><td class="l reg">—</td><td>1</td></tr>
+   <tr><td class="l">Знижка за відмінне навчання</td><td class="l reg">−10% на наступний рік</td><td class="l reg">Студент</td><td>0</td></tr></tbody></table></div>`;
+}
+
+/* ---------- ЗВІТИ (розріз листа «звіти») ---------- */
+function renderReports(tabs){
+  const R=[['h','Денна форма'],['t','Бакалавр',412,38,0.86],['s','Факультет права',301,30,0.88],['s','Факультет кібербезпеки',111,8,0.81],['t','Магістр',96,6,0.79],['s','Факультет права',70,4,0.8],['s','Факультет кібербезпеки',26,2,0.77],
+   ['h','Заочна форма'],['t','Бакалавр',143,0,0.71],['t','Коледж',58,0,0.74],['t','Магістр',64,0,0.69],['h','Коледж'],['s','Київ',224,12,0.83],['s','Івано-Франківськ',118,5,0.77],['s','Чернівці',97,3,0.8],
+   ['h','Інше'],['t','Аспірантура',22,4,0.91],['t','Докторантура',6,1,1],['t','Гуртожиток · інститут',296,0,0.1],['t','Гуртожиток · коледж',77,0,0.19]];
+  const tot={n:0,c:0,p:0};
+  const rows=R.map(r=>{if(r[0]==='h')return`<tr class="h"><td colspan="8">${r[1]}</td></tr>`;
+    const [cls,name,n,bud,pct]=r;const contract=n-bud;const charge=contract*(name.startsWith('Гуртожиток')?4200:17800);const paid=Math.round(charge*pct/100)*100;const debtors=Math.round(contract*(1-pct));
+    if(cls==='t'||/Київ|Франків|Чернівці/.test(name)){tot.n+=n;tot.c+=charge;tot.p+=paid}
+    return `<tr class="${cls}"><td class="l">${name}</td><td>${n}</td><td class="reg">${bud}</td><td class="num">${fmt(charge)}</td><td class="num f-ok">${fmt(paid)}</td><td><div class="bar" style="--p:${Math.round(pct*100)}%"><i></i><span>${Math.round(pct*100)}%</span></div></td><td class="num ${charge-paid>0?'f-bad':''}">${fmt(charge-paid)}</td><td>${debtors}</td></tr>`}).join('');
+  main.innerHTML=`${header('Оплати / Звіти','Звіт про оплату',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
+  ${tabs}
+  <div class="filters"><label class="fld"><span>Період</span><select class="ctl" style="width:220px"><option>І семестр 2026–2027</option><option>ІІ семестр 2026–2027</option><option>Рік 2026–2027</option><option>Весь термін</option></select></label>
+   <label class="fld"><span>Станом на</span><input class="ctl" type="date" value="2026-11-20" style="width:170px"></label></div>
+  <div class="card stats"><div><span class="caps">Студентів</span><b>${fmt(tot.n)}</b></div><div><span class="caps">До оплати</span><b>${grn(tot.c)}</b></div><div class="g"><span class="caps">Оплачено</span><b>${grn(tot.p)}</b></div><div><span class="caps">% оплати</span><b>${Math.round(tot.p*100/tot.c)}%</b></div><div class="r"><span class="caps">Не оплачено</span><b>${grn(tot.c-tot.p)}</b></div></div>
+  <div class="tw rep"><table><thead><tr><th class="l">Підрозділ</th><th>Всього студентів</th><th>Бюджет</th><th>До оплати, грн</th><th>Оплачено, грн</th><th>% оплати</th><th>Не оплачено, грн</th><th>Боржників</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="dsub">Цифри у звіті — приклад для прототипу. Розріз повторює лист «звіти» з вашої таблиці: форма → ОКР → факультет / філія коледжу. У робочій версії рядок відкриває список боржників підрозділу.</div>`;
+}
+
+/* ---------- спільне ---------- */
+let tt;function toast(msg,undo){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Скасувати</button>':''}`;document.body.appendChild(t);if(undo)t.querySelector('button').onclick=()=>{undo();t.remove()};clearTimeout(tt);tt=setTimeout(()=>t.remove(),5000)}
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-open],[data-plus],[data-act],[data-close],[data-verify],[data-dead]');if(!t)return;
+  if(t.hasAttribute('data-dead')){e.preventDefault();toast('У прототипі відкрито лише розділ «Оплати»');return}
+  if(t.dataset.open){state.sel=state.sel===t.dataset.open&&!t.classList.contains('link')?null:t.dataset.open;render();if(state.sel)setTimeout(()=>document.querySelector('.detail')?.scrollIntoView({block:'nearest',behavior:'smooth'}),0)}
+  else if(t.dataset.plus)quickPlus(t.dataset.plus);
+  else if(t.hasAttribute('data-close')){state.sel=null;render()}
+  else if(t.dataset.verify){PAYMENTS.find(x=>x.id==t.dataset.verify).verified=true;render();toast('Квитанцію звірено з випискою банку')}
+  else switch(t.dataset.act){
+    case'pay':openPay(t.dataset.sid||state.sel);break;
+    case'export':toast('У робочій версії — файл .xlsx у колонках відомості бухгалтерії');break;
+    case'import':toast('У робочій версії — завантаження виписки банку, оплати розносяться автоматично');break;
+    case'link':toast('Посилання на оплату скопійовано — його можна надіслати батькам');break;
+    case'hidenote':try{localStorage.setItem('opl-note','1')}catch(_){}render();break;
+    default:toast('У прототипі ця дія не реалізована')}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.querySelector('.modal');if(m)m.remove();else if(state.sel){state.sel=null;render()}}});
+window.addEventListener('hashchange',nav);nav();
+})();
+</script>

@@ -1,0 +1,14 @@
+# Публікуємо лише демо-код. Презентації, PDF, скриншоти й локальне — тільки на диску.
+/*
+!/.gitignore
+!/README.md
+!/prototype/
+!/figma-plugin-campus-learn/
+!/.claude/
+/.claude/*
+!/.claude/launch.json
+.DS_Store
+.venv/
+.env
+*.log
+.payment-callback-url
