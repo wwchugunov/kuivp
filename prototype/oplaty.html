@@ -216,7 +216,7 @@ h1{font-size:22px;margin-top:2px}
 .col>.tw:first-child:not(:last-child){flex:none}
 .work .detail{position:static;flex:none;width:380px;max-height:none;height:100%;overflow:auto}
 .scrollarea{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px;padding-bottom:8px}
-.scrollarea .tw{max-height:none;flex:none}
+.scrollarea .tw{max-height:none;flex:none;overflow-y:hidden}
 .phonecol{flex:none;display:flex;align-items:flex-start;overflow:auto}
 .phonecol .phone{width:300px;height:min(660px,100%);min-height:520px;border-radius:42px;padding:10px}
 .col>.tw{background:var(--white)}
@@ -720,10 +720,11 @@ function renderTariffs(tabs){
     ${[0,1,2,3].map(k=>g.tariffs[k]?`<td class="num" style="line-height:1.25;padding:6px 10px">${fmt(g.tariffs[k])}<div style="font-weight:400;color:var(--muted);font-size:11.5px">${yearLabel(g.years[k])} · сем ${fmt(g.tariffs[k]/2)}</div></td>`:`<td class="f-idle">—</td>`).join('')}
     <td class="num">${fmt(g.total)}</td><td class="num">${g.form==='Денна'?fmt(g.hostel):'—'}</td><td>${STUDENTS.filter(s=>s.group===g.id).length}</td></tr>`).join('')}</tbody></table></div>
   <div class="caps" style="margin-top:8px">Знижки, гранти й пільги</div>
-  <div class="tw" style="align-self:flex-start"><table><thead><tr><th class="l">Категорія</th><th class="l">Умова</th><th class="l">Хто платить</th><th>Студентів</th></tr></thead><tbody>
+  <div class="tw"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:32%"><col style="width:28%"><col style="width:12%"></colgroup><thead><tr><th class="l">Категорія</th><th class="l">Умова</th><th class="l">Хто платить</th><th>Студентів</th></tr></thead><tbody>
    <tr><td class="l">Дитина ветерана</td><td class="l reg">100% вартості навчання</td><td class="l reg">Мінветеранів, за договором</td><td>1</td></tr>
    <tr><td class="l">Грант</td><td class="l reg">50% вартості навчання</td><td class="l reg">Студент — решту 50%</td><td>1</td></tr>
-   <tr><td class="l">Бюджет</td><td class="l reg">нарахування за навчання не формуються</td><td class="l reg">—</td><td>1</td></tr></tbody></table></div>`;
+   <tr><td class="l">Бюджет</td><td class="l reg">нарахування за навчання не формуються</td><td class="l reg">—</td><td>1</td></tr>
+   <tr><td class="l">Знижка за відмінне навчання</td><td class="l reg">−10% на наступний рік</td><td class="l reg">Студент — решту 90%</td><td>0</td></tr></tbody></table></div>`;
 }
 
 /* ---------- ЗВІТИ (структура листа «звіти») ---------- */
