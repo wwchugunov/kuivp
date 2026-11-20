@@ -251,6 +251,10 @@ ul.about b{color:var(--ink)}
 .nav.sub .cnt{margin-left:auto}
 
 .docl{display:inline-flex;align-items:center;gap:6px;font-size:12.5px}
+
+a.xl{color:var(--info);text-decoration:underline;text-decoration-color:rgba(31,74,122,.35);text-underline-offset:2px;cursor:pointer;font-weight:500}
+a.xl:hover{text-decoration-color:currentColor}
+.links{display:flex;flex-direction:column;gap:6px;font-size:13px}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
@@ -407,7 +411,7 @@ function reconcile(m){
     RECEIPTS.push(r);made++}})();
 
 /* ---------- стан ---------- */
-const state={view:'history',kind:'study',mode:'year',year:2026,sem:2,seg:'all',q:'',group:'',pay:'',cont:false,sel:null};
+const state={hl:null,rk:'study',rp:'I',view:'history',kind:'study',mode:'year',year:2026,sem:2,seg:'all',q:'',group:'',pay:'',cont:false,sel:null};
 try{state.cont=localStorage.getItem('opl-cont')==='1'}catch(e){}
 const $=s=>document.querySelector(s);const main=$('#main');
 const pill=(t,c)=>`<span class="pill p-${c}">${esc(t)}</span>`;
@@ -576,6 +580,13 @@ function detailHtml(id){
       <div class="r1"><span class="link">${esc(p.receipt)}</span>${p.verified?'<span class="pill p-ok">✓ Звірено</span>':`<button class="pill p-warn" style="border:0" data-verify="${p.id}">Звірити</button>`}</div>
       ${p.note?`<div class="r2">${esc(p.note)}</div>`:''}</div>`).join(''):`<div class="dsub">${state.kind==='study'&&s.fin==='Бюджет'?'Навчається за бюджетом — оплати не нараховуються.':'Оплат ще немає.'}</div>`}</div>
    <div class="hr"></div>
+   <div class="caps">Документи і пов’язані дані</div>
+   <div class="links">${ordersOf(s.id).map(o=>`<a class="xl" data-ogo="${o.no}" data-sid="${s.id}">Наказ №${o.no} від ${o.date} · ${o.tab.toLowerCase()}</a>`).join('')}
+     ${RECEIPTS.filter(r=>r.sid===s.id).length?`<a class="xl" data-hgo="receipts">Квитанції із застосунку: ${RECEIPTS.filter(r=>r.sid===s.id).length}</a>`:''}
+     <a class="xl" data-hgo="dist-journal" data-pt="${g.name}">Журнал групи ${g.name}</a>
+     ${WORKS.some(w=>w.sid===s.id)?`<a class="xl" data-hgo="repo" data-q="${esc(short(s.name))}">Робота в репозитарії</a>`:''}
+     ${s.status==='Відраховано'?`<a class="xl" data-hgo="archive" data-pt="Особові справи">Особова справа в архіві</a>`:''}</div>
+   <div class="hr"></div>
    <div class="caps">Контингент</div>
    <dl class="facts">${[['Фінансування',s.fin],['Підрозділ',g.unit],['Пільгова категорія',s.benefit||'—'],['Акад. мобільність',s.mobility||'—'],['Громадянство',s.citizen],['Дата народження',dstr(s.birth)+' · '+age(s)+' р.'],['Стать',s.sex==='Ж'?'Жінка':'Чоловік'],['Гуртожиток',s.hostel?'Так':'Ні'],['Зарахування',s.order],['Відрахування / академвідпустка',s.statusNote||'—'],['Поновлення / переведення',s.transfer||'—'],['Завершено навчання',s.finish]].map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
   </aside>`;
@@ -640,44 +651,87 @@ function renderReceipts(tabs){
   main.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{rfilter=b.dataset.rf;render()});
 }
 
-/* ---------- ІНШІ РОЗДІЛИ АДМІНКИ (за вимогами замовника; дані вигадані) ---------- */
+/* ---------- ІНШІ РОЗДІЛИ: дані будуються з тих самих студентів, груп і викладачів ---------- */
 const P=(t,c)=>({t,c});
+const short=n=>{const [a,b,c]=n.split(' ');return `${a} ${b[0]}. ${c?c[0]+'.':''}`.trim()};
+const LS=s=>({link:'st',id:s.id,t:short(s.name)}), LG=g=>({link:'gr',id:g.id,t:g.name}), LT=t=>({link:'te',id:t.id,t:t.short}), LO=o=>({link:'ord',id:o.no,t:'№ '+o.no});
+const TEACHERS=[
+ {id:'t1',name:'Ткаченко Віктор Іванович',pos:'Доцент',dept:'Права',rate:'1,0',plan:600,hired:['88-к','29.08.2019']},
+ {id:'t2',name:'Іваненко Олег Петрович',pos:'Доцент',dept:'Кібербезпеки',rate:'1,0',plan:600,hired:['91-к','29.08.2025']},
+ {id:'t3',name:'Мороз Наталія Сергіївна',pos:'Ст. викладач',dept:'Права',rate:'0,75',plan:450,hired:['64-к','01.09.2021']},
+ {id:'t4',name:'Кравчук Ігор Степанович',pos:'Викладач',dept:'Права',rate:'0,5',plan:300,hired:['93-к','01.09.2025']},
+ {id:'t5',name:'Гриценко Олена Василівна',pos:'Викладач',dept:'Коледж',rate:'1,0',plan:720,hired:['71-к','28.08.2022']}];
+TEACHERS.forEach(t=>t.short=short(t.name));const tById=Object.fromEntries(TEACHERS.map(t=>[t.id,t]));
+const DISC=[['Кримінальне право','t1',['SUD','CGU']],['Мережева безпека','t2',['KB']],['Криптографія','t2',['KB']],['Цивільне право','t3',['SUD','CGU','ZF']],['Господарське право','t3',['CGU','PD4']],['Юридична психологія','t4',['PD4','ZF4']],['Основи правоохоронної діяльності','t5',['KK']],['Адміністративне право','t5',['KK','ZF']]];
+const active=g=>STUDENTS.filter(s=>s.group===g&&s.status==='Навчається');
+/* заняття за тиждень 16–20.11 */
+const LESSONS=[];(()=>{let d=16;DISC.forEach(([n,t,gs],i)=>gs.forEach((g,j)=>{const day=16+((i+j*2)%5);const st=rnd();const grp=active(g);const pres=st<.12?0:Math.max(1,grp.length-Math.floor(rnd()*3));
+  LESSONS.push({date:`${day}.11.2026`,day,pair:1+((i+j)%4),g,disc:n,t,plat:gById[g].form==='Заочна'||rnd()<.6?'Zoom':'Meet',dur:st<.12?0:(st<.25?45:80),pres,total:grp.length,status:st<.12?'Перенесено':st<.25?'Без запису':'Проведено'})}));LESSONS.sort((a,b)=>b.day-a.day||a.pair-b.pair)})();
+/* журнал групи */
+const JOURNAL={};STUDENTS.forEach(s=>{const a=s.status==='Навчається'?72+Math.floor(rnd()*28):s.status==='Академвідпустка'?40:20;JOURNAL[s.id]={att:a,avg:(3+a/50+rnd()*.6).toFixed(1).replace('.',','),miss:Math.round((100-a)/4),last:s.status==='Навчається'?(a>80?'20.11.2026':'18.11.2026'):'—'}});
+/* накази */
+const ORDERS=[];
+STUDENTS.forEach(s=>{const m=/№(\d+-с) від ([\d.]+)/.exec(s.order);ORDERS.push({no:m[1],date:m[2],kind:'st',tab:'Зарахування',sid:s.id,text:s.fin==='Бюджет'?'Державне замовлення':s.fin==='Грант'?'Договір, грант 50%':'Договір про навчання',st:'Підписано'})});
+STUDENTS.filter(s=>s.status==='Відраховано').forEach(s=>ORDERS.push({no:'412-с',date:'15.10.2026',kind:'st',tab:'Відрахування',sid:s.id,text:'Невиконання умов договору (борг за навчання)',st:'Підписано'}));
+STUDENTS.filter(s=>s.status==='Академвідпустка').forEach(s=>ORDERS.push({no:'398-с',date:'01.10.2026',kind:'st',tab:'Переведення',sid:s.id,text:'Академічна відпустка до 30.06.2027',st:'Підписано'}));
+STUDENTS.filter(s=>s.transfer).forEach(s=>ORDERS.push({no:'301-с',date:'01.09.2026',kind:'st',tab:'Переведення',sid:s.id,text:'З денної на заочну форму',st:'Підписано'}));
+{const s=STUDENTS.find(x=>x.group==='ZF4');ORDERS.push({no:'431-с',date:'19.11.2026',kind:'st',tab:'Поновлення',sid:s.id,text:'Поновлення після перерви, ліквідація академрізниці',st:'Чернетка'})}
+TEACHERS.forEach(t=>ORDERS.push({no:t.hired[0],date:t.hired[1],kind:'emp',tab:'Прийняття',tid:t.id,text:`Прийняти на посаду: ${t.pos.toLowerCase()}, ${t.rate} ставки`,st:'Підписано'}));
+ORDERS.push({no:'102-к',date:'30.10.2026',kind:'emp',tab:'Звільнення',ext:'Савчук Петро Андрійович',pos:'Ст. викладач · Права',text:'За угодою сторін',st:'Підписано'});
+ORDERS.push({no:'95-к',date:'05.09.2026',kind:'emp',tab:'Навантаження',dept:'Усі кафедри',text:'Розподіл навантаження на 2026–2027',st:'Підписано'});
+ORDERS.push({no:'110-к',date:'15.11.2026',kind:'emp',tab:'Навантаження',tid:'t1',text:'Додатково 40 год (заміна Савчука П. А.)',st:'На підписі'});
+const DISP=[{no:'47',date:'18.11.2026',text:'Підготовка до зимової сесії',who:'Навчальний відділ, кафедри',due:'05.12.2026',st:P('Виконується','warn'),go:['edu','Сесія']},
+ {no:'46',date:'12.11.2026',text:'Звірка оплат за І семестр і квитанцій із застосунку',who:'Бухгалтерія',due:'25.11.2026',st:P('Виконується','warn'),go:['receipts']},
+ {no:'45',date:'03.11.2026',text:'Оновлення силабусів на 2026–2027',who:'Кафедри',due:'01.11.2026',st:P('Прострочено','bad'),go:['dist-methods','Силабуси']},
+ {no:'44',date:'20.10.2026',text:'Передати в архів особові справи відрахованих',who:'Канцелярія',due:'15.11.2026',st:P('Виконано','ok'),go:['archive','Особові справи']}];
+DISP.forEach(d=>ORDERS.push({no:d.no,date:d.date,kind:'disp',tab:'',text:d.text,who:d.who,due:d.due,st:d.st.t,go:d.go}));
+const stP=t=>P(t,t==='Підписано'||t==='Виконано'?'ok':t==='На підписі'||t==='Виконується'?'warn':t==='Прострочено'?'bad':'idle');
+const ordersOf=sid=>ORDERS.filter(o=>o.sid===sid);
+/* репозитарій: роботи студентів 4 курсу і 2 курсу КБ, статті викладачів */
+const TOPICS=['Кримінально-правова характеристика кібершахрайства','Медіація в господарських спорах','Цифрові докази в кримінальному процесі','Захист персональних даних у хмарних сервісах','Відповідальність за порушення авторського права','Захист прав споживачів фінансових послуг','Ювенальна юстиція в Україні','Аналіз вразливостей вебзастосунків'];
+const WORKS=[];STUDENTS.filter(s=>['PD4','ZF4'].includes(s.group)&&s.status==='Навчається').forEach((s,i)=>WORKS.push({title:TOPICS[i%6],sid:s.id,type:'Кваліфікаційна',year:'2027',dept:'Права',uniq:70+Math.floor(rnd()*28)}));
+active('KB').slice(0,3).forEach((s,i)=>WORKS.push({title:TOPICS[3+i*4%5]||TOPICS[7],sid:s.id,type:'Курсова',year:'2026',dept:'Кібербезпеки',uniq:58+Math.floor(rnd()*38)}));
+WORKS.push({title:'Цифрові докази в кримінальному процесі',tid:'t1',type:'Стаття',year:'2025',dept:'Права',uniq:96});
+const workSt=w=>w.uniq<65?P('Доопрацювання','bad'):w.type==='Кваліфікаційна'?P('На перевірці','warn'):P('Опубліковано','ok');
+const tabFilter=(tab,map)=>tab&&map[tab]?map[tab]:null;
 const PAGES={
  'dist-tech':{sec:'Дистанційне навчання',title:'Технічний журнал занять',act:'Додати заняття',
   cols:['Дата','Пара','Група','Дисципліна','Викладач','Платформа','Тривалість','Присутні','Запис','Статус'],
-  rows:[['20.11.2026','3','ПР 4/24','Кримінальне право','Ткаченко В.','Zoom','80 хв','24 / 26','запис_2011.mp4',P('Проведено','ok')],['20.11.2026','2','КБ 3/25','Мережева безпека','Іваненко О.','Meet','80 хв','19 / 22','запис_2011_2.mp4',P('Проведено','ok')],['19.11.2026','4','ПР 6/24','Цивільне право','Мороз Н.','Zoom','45 хв','17 / 21','—',P('Без запису','warn')],['19.11.2026','1','К-ПО 2/26','Основи правоохоронної діяльності','Гриценко О.','Zoom','—','—','—',P('Перенесено','idle')],['18.11.2026','2','ПР 1/23','Юридична психологія','Кравчук І.','Meet','80 хв','20 / 23','запис_1811.mp4',P('Проведено','ok')]]},
- 'dist-journal':{sec:'Дистанційне навчання',title:'Журнал групи',act:'Експорт журналу',tabs:['ПР 4/24','КБ 3/25','К-ПО 2/26'],
-  cols:['Студент','Присутність онлайн','Середній бал','Пропуски','Останнє заняття','Статус'],
-  rows:[['Федоренко Єлизавета Олегівна','96%','4,8','1','20.11.2026',P('Активний','ok')],['Харченко Матвій Дмитрович','88%','4,1','3','20.11.2026',P('Активний','ok')],['Цимбал Анастасія Сергіївна','71%','3,6','7','18.11.2026',P('Ризик','warn')],['Шевченко Владислав Ігорович','54%','3,2','11','12.11.2026',P('Потрібна увага','bad')],['Яковенко Кирило Олександрович','92%','4,5','2','20.11.2026',P('Активний','ok')]]},
+  rows:()=>LESSONS.map(l=>[l.date,String(l.pair),LG(gById[l.g]),l.disc,LT(tById[l.t]),l.plat,l.dur?l.dur+' хв':'—',l.dur?`${l.pres} / ${l.total}`:'—',l.status==='Проведено'?`запис_${l.g}_${l.day}11.mp4`:'—',P(l.status,l.status==='Проведено'?'ok':l.status==='Без запису'?'warn':'idle')])},
+ 'dist-journal':{sec:'Дистанційне навчання',title:'Журнал групи',act:'Експорт журналу',tabs:GROUPS.map(g=>g.name),
+  cols:['Студент','Присутність онлайн','Середній бал','Пропуски','Останнє заняття','Оплата','Статус'],
+  rows:tab=>{const g=GROUPS.find(x=>x.name===tab);return STUDENTS.filter(s=>s.group===g.id).map(s=>{const j=JOURNAL[s.id];const L=ledger(s,'study');
+   return [LS(s),j.att+'%',j.avg,String(j.miss),j.last,L.tot.debt?P('Борг '+fmt(L.tot.debt),'bad'):s.fin==='Бюджет'?P('Бюджет','info'):P('Без боргу','ok'),s.status!=='Навчається'?P(s.status,'idle'):j.att<75?P('Ризик','warn'):P('Активний','ok')]})}},
  'dist-methods':{sec:'Дистанційне навчання',title:'Навчально-методичне забезпечення',act:'Завантажити матеріал',tabs:['Усі','Силабуси','Робочі програми','Лекції','Тести'],
-  cols:['Дисципліна','Тип','Автор','Курс','Оновлено','Статус'],
-  rows:[['Кримінальне право','Силабус','Ткаченко В.','3','02.09.2026',P('Затверджено','ok')],['Мережева безпека','Робоча програма','Іваненко О.','2','28.08.2026',P('Затверджено','ok')],['Цивільне право','Лекції (12)','Мороз Н.','3','14.11.2026',P('На погодженні','warn')],['Юридична психологія','Тести (5)','Кравчук І.','4','10.11.2026',P('Затверджено','ok')],['Адміністративне право','Силабус','Гриценко О.','2','15.06.2025',P('Потребує оновлення','bad')]]},
- 'ord-st':{sec:'Канцелярія',docs:true,title:'Накази · студенти',act:'Новий наказ',tabs:['Зарахування','Відрахування','Переведення','Поновлення'],
+  cols:['Дисципліна','Тип','Автор','Групи','Оновлено','Статус'],
+  rows:tab=>{const types=['Силабус','Робоча програма','Лекції','Тести'];const out=[];DISC.forEach(([n,t,gs],i)=>types.forEach((ty,k)=>{if((i+k)%2)return;const old=ty==='Силабус'&&i%3===1;out.push({ty,r:[n,ty,LT(tById[t]),gs.map(g=>gById[g].name).join(', '),old?'15.06.2025':`${String(1+((i*7+k*5)%28)).padStart(2,'0')}.${k?'11':'09'}.2026`,old?P('Потребує оновлення','bad'):k===2&&i%2?P('На погодженні','warn'):P('Затверджено','ok')]})}));
+   const m={'Силабуси':'Силабус','Робочі програми':'Робоча програма','Лекції':'Лекції','Тести':'Тести'};return out.filter(o=>!m[tab]||o.ty===m[tab]).map(o=>o.r)}},
+ 'ord-st':{sec:'Канцелярія',title:'Накази · студенти',act:'Новий наказ',docs:true,tabs:['Зарахування','Відрахування','Переведення','Поновлення'],
   cols:['№ наказу','Дата','Студент','Група','Підстава','Статус'],
-  rows:{'Зарахування':[['214-с','25.08.2026','Федоренко Є. О.','К-ПО 2/26','Договір №1187, вступ 2026',P('Підписано','ok')],['215-с','25.08.2026','Харченко М. Д.','К-ПО 2/26','Договір №1190, вступ 2026',P('Підписано','ok')],['233-с','01.09.2026','Цимбал А. С.','К-ПО 2/26','Договір №1203, вступ 2026',P('Підписано','ok')]],
-   'Відрахування':[['412-с','15.10.2026','Мороз В. О.','ПР 4/24','Невиконання умов договору',P('Підписано','ok')],['430-с','18.11.2026','Ребров А. С.','ПР-З 1/23','Власне бажання',P('На підписі','warn')]],
-   'Переведення':[['301-с','01.09.2026','Кравчук І. П.','ПР-З 2/25','З денної на заочну форму',P('Підписано','ok')],['398-с','01.10.2026','Юрченко П. А.','К-ПО 2/26','Академічна відпустка',P('Підписано','ok')]],
-   'Поновлення':[['421-с','04.11.2026','Остапчук В. М.','ПР-З 1/23','Заява, ліквідація академрізниці',P('Чернетка','idle')]]}},
- 'ord-emp':{sec:'Канцелярія',docs:true,title:'Накази · працівники',act:'Новий наказ',tabs:['Прийняття','Звільнення','Навантаження'],
+  rows:tab=>ORDERS.filter(o=>o.kind==='st'&&o.tab===tab).map(o=>o.custom||Object.assign([o.no,o.date,LS(STUDENTS.find(s=>s.id===o.sid)),LG(gById[STUDENTS.find(s=>s.id===o.sid).group]),o.text,stP(o.st)],{key:o.no+o.sid,file:o.file}))},
+ 'ord-emp':{sec:'Канцелярія',title:'Накази · працівники',act:'Новий наказ',docs:true,tabs:['Прийняття','Звільнення','Навантаження'],
   cols:['№ наказу','Дата','Працівник','Посада · кафедра','Зміст','Статус'],
-  rows:{'Прийняття':[['88-к','29.08.2026','Іваненко Олег','Доцент · кібербезпеки','Прийняти на 1,0 ставки',P('Підписано','ok')],['91-к','01.09.2026','Литвин Ірина','Методист · навчальний відділ','Прийняти на 0,5 ставки',P('Підписано','ok')]],
-   'Звільнення':[['102-к','30.10.2026','Савчук Петро','Ст. викладач · права','За угодою сторін',P('Підписано','ok')]],
-   'Навантаження':[['95-к','05.09.2026','Кафедра права','—','Розподіл навантаження на 2026–2027',P('Підписано','ok')],['110-к','15.11.2026','Ткаченко Віктор','Доцент · права','Додаткові 40 год (заміна)',P('На підписі','warn')]]}},
- 'ord-disp':{sec:'Канцелярія',docs:true,title:'Розпорядження',act:'Нове розпорядження',
+  rows:tab=>ORDERS.filter(o=>o.kind==='emp'&&o.tab===tab).map(o=>{if(o.custom)return o.custom;const t=o.tid&&tById[o.tid];return Object.assign([o.no,o.date,t?LT(t):(o.ext||o.dept),t?`${t.pos} · ${t.dept}`:(o.pos||'—'),o.text,stP(o.st)],{key:o.no,file:o.file})})},
+ 'ord-disp':{sec:'Канцелярія',title:'Розпорядження',act:'Нове розпорядження',docs:true,
   cols:['№','Дата','Тема','Виконавці','Термін','Статус'],
-  rows:[['47','18.11.2026','Підготовка до зимової сесії','Навчальний відділ, кафедри','05.12.2026',P('Виконується','warn')],['46','12.11.2026','Звірка оплат за І семестр','Бухгалтерія','25.11.2026',P('Виконується','warn')],['45','03.11.2026','Оновлення силабусів','Кафедри','01.11.2026',P('Прострочено','bad')],['44','20.10.2026','Інвентаризація бібліотеки','Бібліотека','15.11.2026',P('Виконано','ok')]]},
- 'archive':{sec:'Архів',title:'Архів',act:'Передати в архів',tabs:['Особові справи','Накази','Відомості','Дипломи'],
-  cols:['Документ','Тип','Рік','Справа №','Місце зберігання','Строк зберігання'],
-  rows:[['Особова справа · Нестеренко І. П.','Особова справа','2023','ОС-23/114','Стелаж 4, полиця 2','75 років'],['Накази з контингенту студентів','Накази','2025','01-04/25','Стелаж 1, полиця 5','Постійно'],['Залікові відомості ПР 1/23','Відомості','2025','05-12/25','Стелаж 2, полиця 1','10 років'],['Журнал видачі дипломів','Дипломи','2024','07-01/24','Сейф 1','Постійно']]},
+  rows:()=>ORDERS.filter(o=>o.kind==='disp').map(o=>o.custom||Object.assign([o.no,o.date,o.go?{link:'go',hash:o.go[0],pt:o.go[1],t:o.text}:o.text,o.who,o.due,stP(o.st)],{key:o.no,file:o.file}))},
+ 'archive':{sec:'Архів',title:'Архів',act:'Передати в архів',tabs:['Особові справи','Накази','Відомості'],
+  cols:['Документ','Пов’язано з','Рік','Справа №','Місце зберігання','Строк зберігання'],
+  rows:tab=>tab==='Особові справи'?STUDENTS.filter(s=>s.status==='Відраховано').map(s=>['Особова справа',LS(s),'2026','ОС-26/'+s.id.split('-')[1].padStart(3,'0'),'Стелаж 4, полиця 2','75 років'])
+   :tab==='Накази'?[['Накази з контингенту студентів, 2025',{link:'go',hash:'ord-st',pt:'Зарахування',t:'Канцелярія · накази'},'2025','01-04/25','Стелаж 1, полиця 5','Постійно'],['Накази з особового складу, 2025',{link:'go',hash:'ord-emp',pt:'Прийняття',t:'Канцелярія · накази'},'2025','02-01/25','Стелаж 1, полиця 6','75 років']]
+   :GROUPS.filter(g=>g.start<=2025).map((g,i)=>['Залікові та екзаменаційні відомості 2025–2026',LG(g),'2026','05-'+String(10+i)+'/26','Стелаж 2, полиця '+(1+i%3),'10 років'])},
  'repo':{sec:'Репозитарій',title:'Репозитарій',act:'Додати роботу',tabs:['Усі','Кваліфікаційні','Курсові','Статті'],
-  cols:['Назва роботи','Автор','Тип','Рік','Кафедра','Унікальність','Статус'],
-  rows:[['Кримінально-правова характеристика кібершахрайства','Литвиненко А. О.','Кваліфікаційна','2026','Права','91%',P('Опубліковано','ok')],['Захист персональних даних у хмарних сервісах','Антоненко Д. С.','Курсова','2026','Кібербезпеки','84%',P('На перевірці','warn')],['Медіація в господарських спорах','Онищенко А. Р.','Курсова','2026','Права','62%',P('Доопрацювання','bad')],['Цифрові докази в кримінальному процесі','Ткаченко В.','Стаття','2025','Права','96%',P('Опубліковано','ok')]]},
+  cols:['Назва роботи','Автор','Група','Тип','Рік','Кафедра','Унікальність','Статус'],
+  rows:tab=>{const m={'Кваліфікаційні':'Кваліфікаційна','Курсові':'Курсова','Статті':'Стаття'};return WORKS.filter(w=>!m[tab]||w.type===m[tab]).map(w=>{const s=w.sid&&STUDENTS.find(x=>x.id===w.sid);return [w.title,s?LS(s):LT(tById[w.tid]),s?LG(gById[s.group]):'—',w.type,w.year,w.dept,w.uniq+'%',workSt(w)]})}},
  'load':{sec:'Навантаження',title:'Навантаження викладачів',act:'Розподілити навантаження',
-  cols:['Викладач','Кафедра','Ставка','План, год','Виконано, год','Виконання','Статус'],
-  rows:[['Ткаченко Віктор','Права','1,0','600','284','bar:47',P('За графіком','ok')],['Іваненко Олег','Кібербезпеки','1,0','600','251','bar:42',P('За графіком','ok')],['Мороз Наталія','Права','0,75','450','142','bar:32',P('Відставання','warn')],['Кравчук Ігор','Права','0,5','300','150','bar:50',P('За графіком','ok')],['Гриценко Олена','Коледж','1,0','720','198','bar:28',P('Відставання','bad')]]},
- 'edu':{sec:'Навчальний відділ',title:'Навчальний відділ',act:'Новий навчальний план',tabs:['Навчальні плани','Сесія','Розклад'],
-  cols:['Група','Спеціальність','Семестр','Дисциплін','Кредитів ЄКТС','Екзаменів','Статус'],
-  rows:[['ПР 4/24','Право','5','8','30','4',P('Затверджено','ok')],['КБ 3/25','Кібербезпека','3','7','30','3',P('Затверджено','ok')],['К-ПО 2/26','Правоохоронна діяльність','1','9','30','4',P('На погодженні','warn')],['ПР-З 2/25','Право (заочна)','3','6','30','3',P('Затверджено','ok')]]},
+  cols:['Викладач','Кафедра','Ставка','Дисципліни','План, год','Виконано, год','Виконання','Заняття цього тижня'],
+  rows:()=>TEACHERS.map(t=>{const ds=DISC.filter(d=>d.t===t.id||d[1]===t.id);const ls=LESSONS.filter(l=>l.t===t.id&&l.dur);const done=Math.round(t.plan*.38)+ls.length*2;const p=Math.round(done*100/t.plan);
+   return Object.assign([LT(t),t.dept,t.rate,ds.map(d=>d[0]).join(', '),String(t.plan),String(done),'bar:'+p,{link:'go',hash:'dist-tech',q:t.short,t:`${ls.length} у журналі занять`}],{key:t.id})})},
+ 'edu':{sec:'Навчальний відділ',title:'Навчальний відділ',act:'Новий навчальний план',tabs:['Навчальні плани','Сесія'],
+  cols:['Група','Спеціальність','Семестр','Дисципліни','Кредитів ЄКТС','Екзаменів','Студентів','Статус'],
+  rows:tab=>GROUPS.map(g=>{const ds=DISC.filter(d=>d[2].includes(g.id));const n=active(g.id).length;
+   return tab==='Сесія'?[LG(g),g.spec,String(g.course*2-1),ds.map(d=>d[0]).join(', ')||'—','30',String(Math.max(2,ds.length+1)),String(n),P('Сесія 15.12–26.12','idle')]
+   :[LG(g),g.spec,String(g.course*2-1),ds.map(d=>d[0]).join(', ')||'—','30',String(Math.max(2,ds.length+1)),String(n),g.start===2026?P('На погодженні','warn'):P('Затверджено','ok')]})},
 };
 const NAV=[
  {id:'fin',t:'Фінанси',d:'M2 5h20v14H2zM2 10h20M6 15h4',kids:[['history','Історія оплат'],['receipts','Квитанції із застосунку'],['tariffs','Тарифи'],['reports','Звіти']]},
@@ -698,37 +752,45 @@ function sideHtml(){
     const open=navOpen.has(m.id),act=m.kids.some(k=>k[0]===state.view);
     return `<button class="nav mod ${act?'act':''}" data-mod="${m.id}" aria-expanded="${open}">${ic(m.d)}<span>${m.t}</span><i class="chev">›</i></button>
       ${open?`<div class="subs">${m.kids.map(([k,t])=>`<a class="nav sub ${state.view===k?'on':''}" href="#${k}">${t}${k==='receipts'&&newReceipts()?` <span class="cnt">${newReceipts()}</span>`:''}</a>`).join('')}</div>`:''}`}).join('')}</div>`}
-function cellHtml(v){if(v&&v.t)return`<td class="f-${v.c}">${v.t}</td>`;if(typeof v==='string'&&v.startsWith('bar:')){const p=v.slice(4);return`<td><div class="bar" style="--p:${p}%"><i></i><span>${p}%</span></div></td>`}return`<td class="l reg">${esc(v)}</td>`}
+function cellHtml(v){
+  if(v&&v.link){const a=v.link==='st'?`data-goto="${v.id}"`:v.link==='gr'?`data-ggo="${v.id}"`:v.link==='te'?`data-hgo="load" data-hl="${v.id}"`:v.link==='ord'?`data-ogo="${v.id}"`:`data-hgo="${v.hash}" ${v.pt?`data-pt="${esc(v.pt)}"`:''} ${v.q?`data-q="${esc(v.q)}"`:''}`;
+    return `<td class="l"><a class="xl" ${a}>${esc(v.t)}</a></td>`}
+  if(v&&v.t)return`<td class="f-${v.c}">${v.t}</td>`;
+  if(typeof v==='string'&&v.startsWith('bar:')){const p=v.slice(4);return`<td><div class="bar" style="--p:${p}%"><i></i><span>${p}%</span></div></td>`}
+  return`<td class="l reg">${esc(v)}</td>`}
 const ICON_DOC='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F4A7A" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg>';
 const docName=r=>r.file||`НАКАЗ_${String(r[0]).replace(/[^\wА-Яа-яІіЇїЄєҐґ-]/g,'')}.docx`;
 function docCell(r){return `<td class="l"><button class="link docl" data-doc="${esc(docName(r))}">${ICON_DOC}${esc(docName(r))}</button></td>`}
 function openOrder(){
-  const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):null;const cols=pg.cols.slice(0,-1);
+  const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):'';const cols=pg.cols.slice(0,-1);
+  const kind=state.view==='ord-st'?'st':state.view==='ord-emp'?'emp':'disp';
   const m=document.createElement('div');m.className='modal';
   m.innerHTML=`<div class="scrim" data-mclose></div><form id="ordf"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2>${pg.act}${tab?' · '+tab.toLowerCase():''}</h2><button type="button" class="x" data-mclose aria-label="Закрити">×</button></div>
-   <div class="fg">${cols.map((c,i)=>`<label class="fld ${c.length>18||i>3?'full':''}"><span>${c}</span><input class="ctl" name="c${i}" value="${i===0?(pg.title.includes('студенти')?'4'+(31+Math.floor(Math.random()*60))+'-с':pg.title.includes('працівники')?'1'+(11+Math.floor(Math.random()*80))+'-к':String(48+Math.floor(Math.random()*20))):i===1?'20.11.2026':''}" ${i<2?'required':''}></label>`).join('')}
+   <div class="fg">${cols.map((c,i)=>`<label class="fld ${c.length>18||i>3?'full':''}"><span>${c}</span>${kind==='st'&&c==='Студент'?`<select class="ctl" name="c${i}">${STUDENTS.map(s=>`<option value="${s.id}">${esc(s.name)} · ${gById[s.group].name}</option>`).join('')}</select>`:kind==='st'&&c==='Група'?'<input class="ctl" name="c'+i+'" value="за студентом" disabled>':`<input class="ctl" name="c${i}" value="${i===0?(kind==='st'?'4'+(32+Math.floor(Math.random()*60))+'-с':kind==='emp'?'1'+(11+Math.floor(Math.random()*80))+'-к':String(48+Math.floor(Math.random()*20))):i===1?'20.11.2026':''}" ${i<2?'required':''}>`}</label>`).join('')}
    <label class="fld"><span>Статус</span><select class="ctl" name="st"><option>Чернетка</option><option>На підписі</option><option>Підписано</option></select></label>
    <label class="fld full"><span>Файл наказу (Word або PDF)</span><input class="ctl" type="file" name="f" accept=".doc,.docx,.pdf"></label></div>
-   <div class="prev">Якщо файл не вибрано, у прототипі буде доданий зразок «НАКАЗ.docx».</div>
+   <div class="prev">Якщо файл не вибрано, у прототипі буде доданий зразок «НАКАЗ.docx».${kind==='st'?' Наказ з’явиться в картці студента в розділі «Документи».':''}</div>
    <div class="btns" style="justify-content:flex-end"><button type="button" class="btn" data-mclose>Скасувати</button><button class="btn pri" type="submit">Зберегти</button></div></form>`;
   document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target.closest('[data-mclose]'))m.remove()});
-  m.querySelector('form').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
-    const st=fd.get('st');const row=cols.map((c,i)=>fd.get('c'+i)||'—');row.push(P(st,st==='Підписано'?'ok':st==='На підписі'?'warn':'idle'));
-    const f=fd.get('f');row.file=f&&f.name?f.name:`НАКАЗ_${row[0]}.docx`;row.fresh=true;
-    const list=Array.isArray(pg.rows)?pg.rows:pg.rows[tab];list.forEach(x=>x.fresh=false);list.unshift(row);m.remove();render();toast(`Наказ №${row[0]} збережено · ${row.file}`)};
+  m.querySelector('form').onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);const f=fd.get('f');
+    const o={no:fd.get('c0'),date:fd.get('c1'),kind,tab,st:fd.get('st'),file:f&&f.name?f.name:'НАКАЗ_'+fd.get('c0')+'.docx'};
+    if(kind==='st'){o.sid=fd.get('c2');o.text=fd.get('c4')||'—'}else{o.custom=Object.assign(cols.map((c,i)=>fd.get('c'+i)||'—').concat([stP(o.st)]),{key:o.no,file:o.file})}
+    ORDERS.unshift(o);state.hl=kind==='st'?o.no+o.sid:o.no;m.remove();render();toast(`Наказ №${o.no} збережено · ${o.file}`)};
 }
 function renderPage(){
   const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):null;
-  let rows=Array.isArray(pg.rows)?pg.rows:pg.rows[tab];
-  if(Array.isArray(pg.rows)&&tab&&tab!=='Усі'&&pg.tabs.indexOf(tab)>0&&state.view!=='dist-journal'&&state.view!=='edu')rows=rows.filter(r=>r.some(c=>typeof c==='string'&&(c.toLowerCase().includes(tab.toLowerCase().slice(0,5)))));
+  let rows=pg.rows(tab);
   if(pq)rows=rows.filter(r=>r.some(c=>String(c&&c.t||c).toLowerCase().includes(pq.toLowerCase())));
   main.innerHTML=`${header(pg.sec,pg.title,`<button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="${pg.docs?'neworder':'soon'}">+ ${pg.act}</button>`)}
-  <div class="toolbar">${pg.tabs?`<div class="sw" role="tablist">${pg.tabs.map(t=>`<button class="${t===tab?'on':''}" data-ptab="${esc(t)}">${t}</button>`).join('')}</div>`:''}<input class="ctl grow" id="p-q" type="search" placeholder="Пошук" aria-label="Пошук" value="${esc(pq)}"></div>
+  <div class="toolbar">${pg.tabs?`<div class="sw" role="tablist">${pg.tabs.map(t=>`<button class="${t===tab?'on':''}" data-ptab="${esc(t)}">${t}</button>`).join('')}</div>`:''}<input class="ctl grow" id="p-q" type="search" placeholder="Пошук" aria-label="Пошук" value="${esc(pq)}">${pq?'<button class="btn" data-clearq>Скинути пошук</button>':''}</div>
   <div class="work"><div class="col"><div class="tw"><table><thead><tr>${pg.cols.map(c=>`<th class="l">${c}</th>`).join('')}${pg.docs?'<th class="l">Документ</th>':''}</tr></thead><tbody>
-  ${rows.map(r=>`<tr class="${r.fresh?'sel':''}">${r.map(cellHtml).join('')}${pg.docs?docCell(r):''}</tr>`).join('')||`<tr><td colspan="${pg.cols.length+1}" class="reg" style="height:70px">Нічого не знайдено.</td></tr>`}</tbody></table></div></div></div>`;
-  main.querySelectorAll('[data-ptab]').forEach(b=>b.onclick=()=>{ptab[state.view]=b.dataset.ptab;render()});
+  ${rows.map(r=>`<tr class="${state.hl&&r.key===state.hl?'sel hlrow':''}">${r.map(cellHtml).join('')}${pg.docs?docCell(r):''}</tr>`).join('')||`<tr><td colspan="${pg.cols.length+1}" class="reg" style="height:70px">Нічого не знайдено.</td></tr>`}</tbody></table></div></div></div>`;
+  main.querySelectorAll('[data-ptab]').forEach(b=>b.onclick=()=>{ptab[state.view]=b.dataset.ptab;state.hl=null;render()});
   const q=$('#p-q');q.oninput=()=>{pq=q.value;const p=q.selectionStart;render();const n=$('#p-q');n.focus();n.setSelectionRange(p,p)};
+  const c=main.querySelector('[data-clearq]');if(c)c.onclick=()=>{pq='';render()};
+  const h=main.querySelector('.hlrow');if(h)h.scrollIntoView({block:'center'});
 }
+function goTo(hash,opts={}){if(opts.pt!==undefined)ptab[hash]=opts.pt;pq=opts.q||'';state.hl=opts.hl||null;if(location.hash==='#'+hash)render();else location.hash=hash}
 
 /* ---------- ТАРИФИ ---------- */
 function renderTariffs(tabs){
@@ -741,46 +803,64 @@ function renderTariffs(tabs){
     <td class="num">${fmt(g.total)}</td><td class="num">${g.form==='Денна'?fmt(g.hostel):'—'}</td><td>${STUDENTS.filter(s=>s.group===g.id).length}</td></tr>`).join('')}</tbody></table></div>
   <div class="caps" style="margin-top:8px">Знижки, гранти й пільги</div>
   <div class="tw"><table style="width:100%;table-layout:fixed"><colgroup><col style="width:28%"><col style="width:32%"><col style="width:28%"><col style="width:12%"></colgroup><thead><tr><th class="l">Категорія</th><th class="l">Умова</th><th class="l">Хто платить</th><th>Студентів</th></tr></thead><tbody>
-   <tr><td class="l">Дитина ветерана</td><td class="l reg">100% вартості навчання</td><td class="l reg">Мінветеранів, за договором</td><td>1</td></tr>
-   <tr><td class="l">Грант</td><td class="l reg">50% вартості навчання</td><td class="l reg">Студент — решту 50%</td><td>1</td></tr>
-   <tr><td class="l">Бюджет</td><td class="l reg">нарахування за навчання не формуються</td><td class="l reg">—</td><td>1</td></tr>
+   <tr><td class="l">Дитина ветерана</td><td class="l reg">100% вартості навчання</td><td class="l reg">Мінветеранів, за договором</td><td>${STUDENTS.filter(s=>s.payer==='Мінветеранів').length}</td></tr>
+   <tr><td class="l">Грант</td><td class="l reg">50% вартості навчання</td><td class="l reg">Студент — решту 50%</td><td>${STUDENTS.filter(s=>s.fin==='Грант').length}</td></tr>
+   <tr><td class="l">Бюджет</td><td class="l reg">нарахування за навчання не формуються</td><td class="l reg">—</td><td>${STUDENTS.filter(s=>s.fin==='Бюджет').length}</td></tr>
    <tr><td class="l">Знижка за відмінне навчання</td><td class="l reg">−10% на наступний рік</td><td class="l reg">Студент — решту 90%</td><td>0</td></tr></tbody></table></div>`;
 }
 
 /* ---------- ЗВІТИ (структура листа «звіти») ---------- */
 function renderReports(tabs){
-  const R=[['h','Денна форма'],['t','Бакалавр',412,38,6,0.86],['s','Факультет права',301,30,4,0.88],['s','Факультет кібербезпеки',111,8,2,0.81],['t','Магістр',96,6,1,0.79],['s','Факультет права',70,4,1,0.8],['s','Факультет кібербезпеки',26,2,0,0.77],
-   ['h','Заочна форма'],['t','Бакалавр',143,0,0,0.71],['t','Коледж',58,0,0,0.74],['t','Магістр',64,0,0,0.69],['h','Коледж'],['s','Філія «Центр»',224,12,1,0.83],['s','Філія «Захід»',118,5,0,0.77],['s','Філія «Південь»',97,3,2,0.8],
-   ['h','Інше'],['t','Аспірантура',22,4,0,0.91],['t','Докторантура',6,1,0,1],['t','Гуртожиток · інститут',296,0,3,0.1],['t','Гуртожиток · коледж',77,0,0,0.19]];
-  const tot={n:0,c:0,p:0};
-  const rows=R.map(r=>{if(r[0]==='h')return`<tr class="h"><td colspan="9">${r[1]}</td></tr>`;
-    const [cls,name,n,bud,fr,pct]=r;const contract=n-bud;const charge=contract*(name.startsWith('Гуртожиток')?4200:17800);const paid=Math.round(charge*pct/100)*100;const debtors=Math.round(contract*(1-pct));
-    if(cls==='t'||/Філія/.test(name)){tot.n+=n;tot.c+=charge;tot.p+=paid}
-    return `<tr class="${cls}"><td class="l">${name}</td><td>${n}</td><td class="reg">${bud}</td><td class="reg">${fr}</td><td class="num">${fmt(charge)}</td><td class="num f-ok">${fmt(paid)}</td><td><div class="bar" style="--p:${Math.round(pct*100)}%"><i></i><span>${Math.round(pct*100)}%</span></div></td><td class="num ${charge-paid>0?'f-bad':''}">${fmt(charge-paid)}</td><td>${debtors}</td></tr>`}).join('');
-  const C=[['Денна форма · бакалаври',[[1,118,12,2],[2,104,10,1],[3,97,9,2],[4,93,7,1]]],['Денна форма · магістри',[[1,52,4,1],[2,44,2,0]]],['Заочна форма · бакалаври',[[2,38,0,0],[3,41,0,0],[4,35,0,0],[5,29,0,0]]],['Коледж',[[1,162,8,1],[2,148,7,1],[3,129,5,1]]]];
-  const crow=C.map(([t,rs])=>`<tr class="h"><td colspan="7">${t}</td></tr>`+rs.map(([c,n,b,f])=>{const pay=n-b;const ok=Math.round(pay*(.7+((c*7)%5)/25));return `<tr class="s"><td class="l">${c} курс</td><td>${n}</td><td class="reg">${b}</td><td class="reg">${f}</td><td class="f-ok">${ok}</td><td class="${pay-ok?'f-bad':''}">${pay-ok}</td><td><div class="bar" style="--p:${Math.round(ok*100/pay)}%"><i></i><span>${Math.round(ok*100/pay)}%</span></div></td></tr>`}).join('')).join('');
-  main.innerHTML=`${header('Фінанси / Звіти','Оплата за навчання · І семестр 2026–2027',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
+  const rk=state.rk||'study',rp=state.rp||'I';
+  const PER={I:'І семестр 2026–2027',II:'ІІ семестр 2026–2027',Y:'Рік 2026–2027',T:'Весь термін навчання'};
+  const inP=m=>rp==='T'||(m.year===2026&&(rp==='Y'||(rp==='I'?m.n===1:m.n===2)));
+  const calc=list=>{const o={n:0,bud:0,fr:0,c:0,p:0,left:0,debtors:0};list.forEach(s=>{if(rk==='hostel'&&!s.hostel)return;o.n++;if(s.fin==='Бюджет')o.bud++;if(s.citizen!=='Україна')o.fr++;
+    const ss=ledger(s,rk).sems.filter(inP);o.c+=ss.reduce((a,m)=>a+m.charge,0);o.p+=ss.reduce((a,m)=>a+Math.min(m.paid,m.charge),0);o.left+=ss.reduce((a,m)=>a+m.left,0);if(ss.some(m=>m.debt>0))o.debtors++});return o};
+  const by=f=>STUDENTS.filter(s=>{const g=gById[s.group];return s.status!=='Відраховано'&&f(g,s)});
+  const row=(cls,name,list,go)=>{const o=calc(list);if(!o.n&&cls!=='t')return'';const pct=o.c?Math.round(o.p*100/o.c):0;
+    return `<tr class="${cls}"><td class="l">${go?`<a class="xl" data-rgo="${go}">${name}</a>`:name}</td><td>${o.n}</td><td class="reg">${o.bud}</td><td class="reg">${o.fr}</td><td class="num">${fmt(o.c)}</td><td class="num f-ok">${fmt(o.p)}</td><td><div class="bar" style="--p:${pct}%"><i></i><span>${pct}%</span></div></td><td class="num ${o.left?'f-bad':''}">${fmt(o.left)}</td><td>${o.debtors?`<a class="xl" data-rgo="${go||'all'}" data-debt="1">${o.debtors}</a>`:0}</td></tr>`};
+  const D=(g)=>g.form==='Денна';
+  const rows=`<tr class="h"><td colspan="9">Денна форма</td></tr>
+   ${row('t','Бакалавр',by(g=>D(g)&&g.okr==='Бакалавр'))}
+   ${row('s','Факультет права',by(g=>D(g)&&g.okr==='Бакалавр'&&/права/.test(g.unit)))}
+   ${row('s','Факультет кібербезпеки',by(g=>D(g)&&/кібербезпеки/.test(g.unit)))}
+   ${row('t','Коледж',by(g=>g.okr==='Коледж'),'1')}
+   <tr class="h"><td colspan="9">Заочна форма</td></tr>
+   ${row('t','Бакалавр',by(g=>!D(g)),'zf')}
+   <tr class="h"><td colspan="9">Академічна мобільність</td></tr>
+   ${row('t','Студенти за програмами мобільності',by((g,s)=>!!s.mobility),'mob')}`;
+  const courses=[['Денна форма',g=>D(g)],['Заочна форма',g=>!D(g)]].map(([t,f])=>`<tr class="h"><td colspan="7">${t}</td></tr>`+[1,2,3,4].map(c=>{const list=by(g=>f(g)&&g.course===c);if(!list.length)return'';const o=calc(list);const paidN=list.filter(s=>(rk!=='hostel'||s.hostel)&&s.fin!=='Бюджет'&&ledger(s,rk).sems.filter(inP).every(m=>m.left===0)).length;const pay=o.n-o.bud;const pct=pay?Math.round(paidN*100/pay):0;
+    return `<tr class="s"><td class="l"><a class="xl" data-rgo="${f===D?String(c):'zf'}">${c} курс</a></td><td>${o.n}</td><td class="reg">${o.bud}</td><td class="reg">${o.fr}</td><td class="f-ok">${paidN}</td><td class="${pay-paidN?'f-bad':''}">${Math.max(0,pay-paidN)}</td><td><div class="bar" style="--p:${pct}%"><i></i><span>${pct}%</span></div></td></tr>`}).join('')).join('');
+  const T=calc(by(()=>true));
+  main.innerHTML=`${header('Фінанси / Звіти',`Оплата за ${rk==='hostel'?'гуртожиток':'навчання'} · ${PER[rp]}`,`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
-  <div class="filters"><label class="fld"><span>Вид оплати</span><select class="ctl" style="width:170px"><option>Навчання</option><option>Гуртожиток</option></select></label>
-   <label class="fld"><span>Період</span><select class="ctl" style="width:220px"><option>І семестр 2026–2027</option><option>ІІ семестр 2026–2027</option><option>Рік 2026–2027</option><option>Весь термін</option></select></label>
-   <label class="fld"><span>Станом на</span><input class="ctl" type="date" value="2026-11-20" style="width:170px"></label></div>
-  <div class="card stats">${stat('Студентів',fmt(tot.n))}${stat('До оплати',grn(tot.c))}${stat('Оплачено',grn(tot.p),'g')}${stat('% оплати',Math.round(tot.p*100/tot.c)+'%')}${stat('Не оплачено',grn(tot.c-tot.p),'r')}</div>
+  <div class="filters"><label class="fld"><span>Вид оплати</span><select class="ctl" id="r-k" style="width:170px"><option value="study" ${rk==='study'?'selected':''}>Навчання</option><option value="hostel" ${rk==='hostel'?'selected':''}>Гуртожиток</option></select></label>
+   <label class="fld"><span>Період</span><select class="ctl" id="r-p" style="width:220px">${Object.entries(PER).map(([k,t])=>`<option value="${k}" ${rp===k?'selected':''}>${t}</option>`).join('')}</select></label>
+   <label class="fld"><span>Станом на</span><input class="ctl" type="date" value="2026-11-20" style="width:170px" disabled></label></div>
+  <div class="card stats">${stat('Студентів',T.n)}${stat('До оплати',grn(T.c))}${stat('Оплачено',grn(T.p),'g')}${stat('% оплати',(T.c?Math.round(T.p*100/T.c):0)+'%')}${stat('Не оплачено',grn(T.left),'r')}${stat('Боржників',T.debtors,'r')}</div>
   <div class="caps">За підрозділами</div>
-  <div class="tw rep"><table><thead><tr><th class="l">Підрозділ</th><th>Всього студентів</th><th>Бюджет</th><th>Іноземці</th><th>До оплати, грн</th><th>Оплачено, грн</th><th>% оплати</th><th>Не оплачено, грн</th><th>Боржників</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="tw rep"><table><thead><tr><th class="l">Підрозділ</th><th>Студентів</th><th>Бюджет</th><th>Іноземці</th><th>До оплати, грн</th><th>Оплачено, грн</th><th>% оплати</th><th>Не оплачено, грн</th><th>Боржників</th></tr></thead><tbody>${rows}</tbody></table></div>
   <div class="caps">За курсами</div>
-  <div class="tw rep" style="align-self:flex-start"><table><thead><tr><th class="l">Курс</th><th>Всього</th><th>Бюджет</th><th>Іноземці</th><th>Оплатили</th><th>Не оплатили</th><th>% оплати</th></tr></thead><tbody>${crow}</tbody></table></div>
-  <div class="dsub">Цифри у звіті — приклад для прототипу. Розріз повторює лист «звіти» з вашої таблиці: гуртожиток, форма → ОКР → факультет / філія коледжу, далі — за курсами з колонкою «Іноземці». У робочій версії рядок відкриває список боржників.</div>`;
+  <div class="tw rep"><table><thead><tr><th class="l">Курс</th><th>Студентів</th><th>Бюджет</th><th>Іноземці</th><th>Оплатили</th><th>Не оплатили</th><th>% студентів, що оплатили</th></tr></thead><tbody>${courses}</tbody></table></div>
+  <div class="dsub">Звіт рахується з історії оплат цього прототипу: ті самі студенти, тарифи й платежі. Назви підрозділів, курси й кількість боржників клікабельні — відкривають відповідний список в «Історії оплат».</div>`;
+  $('#r-k').onchange=e=>{state.rk=e.target.value;render()};$('#r-p').onchange=e=>{state.rp=e.target.value;render()};
 }
 
 /* ---------- спільне ---------- */
 let tt;function toast(msg,undo){document.querySelector('.toast')?.remove();const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${esc(msg)}</span>${undo?'<button>Скасувати</button>':''}`;document.body.appendChild(t);if(undo)t.querySelector('button').onclick=()=>{undo();t.remove()};clearTimeout(tt);tt=setTimeout(()=>t.remove(),5000)}
 document.addEventListener('click',e=>{
   const md=e.target.closest('[data-mod]');if(md){const id=md.dataset.mod;navOpen.has(id)?navOpen.delete(id):navOpen.add(id);$('#sidenav').innerHTML=sideHtml();return}
+  const lk=e.target.closest('[data-ggo],[data-hgo],[data-ogo],[data-rgo]');
+  if(lk){e.preventDefault();const d=lk.dataset;
+    if(d.ggo){state.kind='study';state.mode='year';state.seg='all';state.group=d.ggo;state.pay='';state.q='';state.sel=null;goTo('history')}
+    else if(d.rgo){state.kind=state.rk||'study';state.mode='year';state.group='';state.q='';state.sel=null;state.seg=['1','2','3','4','zf','mob'].includes(d.rgo)?d.rgo:'all';state.pay=d.debt?'debt':'';goTo('history')}
+    else if(d.ogo){const o=ORDERS.find(x=>x.no===d.ogo&&(!d.sid||x.sid===d.sid))||ORDERS.find(x=>x.no===d.ogo);const v=o.kind==='st'?'ord-st':o.kind==='emp'?'ord-emp':'ord-disp';goTo(v,{pt:o.tab||undefined,hl:o.kind==='st'?o.no+o.sid:o.no})}
+    else goTo(d.hgo,{pt:d.pt,q:d.q,hl:d.hl});return}
   const dc=e.target.closest('[data-doc]');if(dc){toast(`Документ «${dc.dataset.doc}» — у прототипі файл не відкривається`);return}
   const t=e.target.closest('[data-open],[data-plus],[data-minus],[data-act],[data-close],[data-verify],[data-dead],[data-accept],[data-reject],[data-goto],[data-kind-switch]');if(!t)return;
   if(t.hasAttribute('data-dead')){e.preventDefault();toast('У прототипі відкрито лише розділ «Оплати»');return}
   if(t.dataset.open){state.sel=state.sel===t.dataset.open&&!t.classList.contains('link')?null:t.dataset.open;render();if(state.sel)setTimeout(()=>document.querySelector('.detail')?.scrollIntoView({block:'nearest',behavior:'smooth'}),0)}
-  else if(t.dataset.goto){const s=STUDENTS.find(x=>x.id===t.dataset.goto);state.kind='study';state.seg='all';state.group=s.group;state.mode='year';state.sel=s.id;location.hash='#history';render()}
+  else if(t.dataset.goto){const s=STUDENTS.find(x=>x.id===t.dataset.goto);state.kind='study';state.seg='all';state.group=s.group;state.pay='';state.q='';state.mode='year';state.sel=s.id;goTo('history')}
   else if(t.dataset.kindSwitch){state.kind=t.dataset.kindSwitch;render()}
   else if(t.dataset.plus)quickPlus(t.dataset.plus);
   else if(t.dataset.minus){PAYMENTS=PAYMENTS.filter(p=>p.id!=t.dataset.minus);render();toast('Позначку «+» знято')}
