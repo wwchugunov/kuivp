@@ -183,7 +183,7 @@ input[type=file].ctl{padding:10px 12px;height:auto}
 
 /* --- джерело квитанції --- */
 .src{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:2px;justify-content:center}
-.src.app{color:var(--brand)} .src.form{color:var(--muted)}
+.src-app{color:var(--brand)} .src-form{color:var(--muted)}
 /* --- мобільний застосунок студента (стиль екранів застосунку з макетів: Montserrat, #E7E9F0, #1B2A6B, #F26B1D) --- */
 .appdemo{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:24px;align-items:start}
 .steps ol{margin:0;padding-left:20px;display:grid;gap:8px;color:var(--ink-2);font-size:13.5px}
@@ -228,6 +228,53 @@ input[type=file].ctl{padding:10px 12px;height:auto}
 .ph-push b{font-size:12px;color:#5F6475}
 @media (max-width:1180px){.appdemo{grid-template-columns:1fr}}
 @media (max-width:420px){.phone{width:100%;max-width:340px}}
+
+/* ===== SPA: усе на одному екрані, прокручується лише таблиця ===== */
+.app{height:100vh;overflow:hidden}
+main{height:100vh;overflow:hidden;padding-block:18px 14px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));gap:12px}
+h1{font-size:22px;margin-top:2px}
+.crumb{font-size:12px}
+.header{align-items:center}
+.btn{height:38px;padding:0 14px;font-size:13.5px}
+.btn.ghost{border-color:transparent;background:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.btn.tgl.on{background:var(--ok-bg);border-color:var(--ok-bg)}
+.tabs{padding:3px}.tabs a,.tabs button{height:34px;padding:0 14px;font-size:13.5px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar .ctl{height:38px;font-size:13.5px}
+.toolbar .grow{flex:1 1 160px;min-width:120px;width:auto}
+.sw{display:inline-flex;gap:2px;padding:3px;border-radius:8px;background:var(--tabs)}
+.sw button{height:32px;padding:0 12px;border:0;border-radius:6px;background:none;color:var(--tab-off);font-weight:500;font-size:13.5px;white-space:nowrap}
+.sw button.on{background:var(--white);color:var(--brand);font-weight:700}
+.stats{display:flex;flex-direction:row;padding:0;gap:0;overflow-x:auto;flex:none;border-radius:10px}
+.stats>div{flex:1 0 auto;padding:8px 16px;gap:2px;border-left:1px solid var(--line)}
+.stats .caps{font-size:10.5px;white-space:nowrap}
+.stats b{font-size:16px}
+.segs{flex:none;align-items:center}
+.seg{height:36px}
+.legend.mini{margin-left:auto;gap:12px;font-size:12px}
+.legend.mini i{width:14px;height:14px;border-radius:3px}
+.work{flex:1;min-height:0;display:flex;gap:16px}
+.col{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+.col>.tw{flex:1;min-height:0;max-height:none}
+.col>.tw:first-child:not(:last-child){flex:none}
+.work .detail{position:static;flex:none;width:380px;max-height:none;height:100%;overflow:auto}
+.scrollarea{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:14px;padding-bottom:8px}
+.scrollarea .tw{max-height:none;flex:none}
+.phonecol{flex:none;display:flex;align-items:flex-start;overflow:auto}
+.phonecol .phone{width:300px;height:min(660px,100%);min-height:520px;border-radius:42px;padding:10px}
+.col>.tw{background:var(--white)}
+td.two{line-height:1.25;padding:5px 10px}
+td.two small{display:block;font-size:11.5px;font-weight:500;color:var(--muted)}
+td.two b{font-weight:700}
+.phonecol .ph-nav{font-size:9.5px;padding:10px 4px 16px;gap:2px}.phonecol .ph-nav span{padding:4px 3px}
+ul.about{margin:0;padding-left:18px;display:grid;gap:8px;color:var(--ink-2);font-size:14px}
+ul.about b{color:var(--ink)}
+@media (max-width:1180px){.work .detail{width:340px}.legend.mini{display:none}}
+@media (max-width:900px){
+  .app,main{height:auto;overflow:visible}
+  .work{flex-direction:column}.col>.tw{max-height:70vh}.work .detail{width:auto;height:auto}
+  .phonecol{justify-content:center}.phone{height:700px}
+}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
@@ -397,8 +444,9 @@ function render(){
   const n=newReceipts();
   const tabs=`<nav class="tabs" aria-label="Розділи оплат">${[['history','Історія оплат'],['receipts','Квитанції від студентів'+(n?` <span class="cnt">${n}</span>`:'')],['tariffs','Тарифи'],['reports','Звіти']].map(([k,t])=>`<a href="#${k}" class="${state.view===k?'on':''}">${t}</a>`).join('')}</nav>`;
   ({history:renderHistory,receipts:renderReceipts,tariffs:renderTariffs,reports:renderReports})[state.view](tabs);
+  if(state.view==='tariffs'||state.view==='reports'){const nav=main.querySelector('nav.tabs');const box=document.createElement('div');box.className='scrollarea';while(nav.nextSibling)box.appendChild(nav.nextSibling);main.appendChild(box)}
 }
-function header(crumb,title,btns){return `<div class="header"><div><div class="crumb">${crumb}</div><h1>${title}</h1></div><div class="btns">${btns}</div></div>`}
+function header(crumb,title,btns){return `<div class="header"><div><div class="crumb">${crumb}</div><h1>${title}</h1></div><div class="btns"><button class="btn ghost" data-act="about">Що змінилось</button>${btns}</div></div>`}
 const SEGS=[['all','Усі'],['1','1 курс'],['2','2 курс'],['3','3 курс'],['4','4 курс'],['mob','Академічна мобільність'],['zf','Заочна форма']];
 function inSeg(s){const g=gById[s.group];switch(state.seg){case'all':return true;case'mob':return!!s.mobility;case'zf':return g.form==='Заочна';default:return g.form==='Денна'&&!s.mobility&&g.course===+state.seg}}
 function inKind(s){return state.kind==='study'||s.hostel}
@@ -440,39 +488,29 @@ function zfSummary(){
 function renderHistory(tabs){
   const list=filtered();const years=[...new Set(GROUPS.flatMap(g=>g.years))].filter(y=>y<=2027).sort();
   const segCount=k=>{const keep=state.seg;state.seg=k;const n=STUDENTS.filter(s=>inKind(s)&&inSeg(s)&&(state.mode!=='year'||gById[s.group].years.includes(state.year))).length;state.seg=keep;return n};
-  let hideNote=false;try{hideNote=localStorage.getItem('opl-note3')==='1'}catch(e){}
   const kindT=state.kind==='study'?'навчання':'гуртожиток';
+  const showDetail=state.sel&&STUDENTS.find(x=>x.id===state.sel&&inKind(x));
   main.innerHTML=`
   ${header(`Оплати / ${kindT} / ${state.mode==='year'?yearLabel(state.year)+' · '+SN(state.sem)+' семестр':'весь термін навчання'}`,'Історія оплат',
-    `<button class="btn" data-act="import">Імпорт виписки банку</button><button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="pay">+ Внести оплату</button>`)}
+    `<button class="btn" data-act="import">Імпорт виписки</button><button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="pay">+ Внести оплату</button>`)}
   ${tabs}
-  ${hideNote?'':`<div class="agree"><div style="display:flex;flex-direction:column;gap:8px"><div class="caps">Для погодження · що змінилось</div><ul>
-    <li><b>Одна таблиця замість двох:</b> контингент (форма, фінансування, статус, пільга, накази) і оплати — в одному рядку студента.</li>
-    <li><b>Оплати на весь термін:</b> кожному студенту нараховано всі семестри від вступу до випуску за тарифами його набору.</li>
-    <li><b>Колонки й вкладки — як у вашій відомості:</b> 1–4 курс, академічна мобільність, заочна форма; колонки в тому самому порядку, експорт у Excel — так само.</li>
-    <li><b>Квитанції студенти надсилають із застосунку</b> — бухгалтер приймає їх у вкладці «Квитанції від студентів» замість Google-форми.</li>
-    <li><b>Гуртожиток</b> ведеться в тій самій таблиці окремим видом оплати.</li></ul></div>
-    <button class="btn sm" data-act="hidenote">Сховати</button></div>`}
-  <div class="filters">
-    <div class="fld"><span>Вид оплати</span><div class="chips"><button class="chip ${state.kind==='study'?'on':''}" data-kind="study">Навчання</button><button class="chip ${state.kind==='hostel'?'on':''}" data-kind="hostel">Гуртожиток</button></div></div>
-    <div class="fld"><span>Вигляд</span><div class="chips"><button class="chip ${state.mode==='year'?'on':''}" data-mode="year">Відомість за рік</button><button class="chip ${state.mode==='term'?'on':''}" data-mode="term">Весь термін навчання</button></div></div>
-    ${state.mode==='year'?`<label class="fld"><span>Навчальний рік</span><select class="ctl" id="f-year" style="width:140px">${years.map(y=>`<option value="${y}" ${y===state.year?'selected':''}>${yearLabel(y)}</option>`).join('')}</select></label>
-    <label class="fld"><span>Семестр відомості</span><select class="ctl" id="f-sem" style="width:150px"><option value="1" ${state.sem===1?'selected':''}>І семестр</option><option value="2" ${state.sem===2?'selected':''}>ІІ семестр</option></select></label>`:''}
-  </div>
-  <div class="filters">
-    <label class="fld"><span>Група</span><select class="ctl" id="f-group" style="width:160px"><option value="">Усі групи</option>${GROUPS.map(g=>`<option value="${g.id}" ${state.group===g.id?'selected':''}>${g.name}</option>`).join('')}</select></label>
-    <label class="fld"><span>Статус оплати</span><select class="ctl" id="f-pay" style="width:220px"><option value="">Усі</option>${[['unmarked','Без позначки «+»'],['debt','Мають борг'],['paid','Сплачено повністю'],['verify','Потрібна звірка'],['budget','Бюджет, грант, пільги']].map(([v,t])=>`<option value="${v}" ${state.pay===v?'selected':''}>${t}</option>`).join('')}</select></label>
-    <label class="fld" style="flex:1 1 220px"><span>Пошук</span><input class="ctl" id="f-q" placeholder="ПІБ або група" value="${esc(state.q)}"></label>
+  <div class="toolbar">
+    <div class="sw" role="group" aria-label="Вид оплати"><button class="${state.kind==='study'?'on':''}" data-kind="study">Навчання</button><button class="${state.kind==='hostel'?'on':''}" data-kind="hostel">Гуртожиток</button></div>
+    <div class="sw" role="group" aria-label="Вигляд"><button class="${state.mode==='year'?'on':''}" data-mode="year">Відомість за рік</button><button class="${state.mode==='term'?'on':''}" data-mode="term">Весь термін</button></div>
+    ${state.mode==='year'?`<select class="ctl" id="f-year" aria-label="Навчальний рік" title="Навчальний рік">${years.map(y=>`<option value="${y}" ${y===state.year?'selected':''}>${yearLabel(y)}</option>`).join('')}</select>
+    <select class="ctl" id="f-sem" aria-label="Семестр відомості" title="Семестр відомості"><option value="1" ${state.sem===1?'selected':''}>І семестр</option><option value="2" ${state.sem===2?'selected':''}>ІІ семестр</option></select>`:''}
+    <select class="ctl" id="f-group" aria-label="Група"><option value="">Усі групи</option>${GROUPS.map(g=>`<option value="${g.id}" ${state.group===g.id?'selected':''}>${g.name}</option>`).join('')}</select>
+    <select class="ctl" id="f-pay" aria-label="Статус оплати"><option value="">Усі статуси</option>${[['unmarked','Без позначки «+»'],['debt','Мають борг'],['paid','Сплачено повністю'],['verify','Потрібна звірка'],['budget','Бюджет, грант, пільги']].map(([v,t])=>`<option value="${v}" ${state.pay===v?'selected':''}>${t}</option>`).join('')}</select>
+    <input class="ctl grow" id="f-q" type="search" placeholder="Пошук: ПІБ або група" aria-label="Пошук" value="${esc(state.q)}">
+    <button class="btn tgl ${state.cont?'on':''}" id="c-cont" aria-pressed="${state.cont}" title="Курс, форма, фінансування, ОКР, пільга, мобільність, громадянство, дата народження, стать, накази, завершення навчання">${state.cont?'✓ ':''}Колонки контингенту</button>
   </div>
   ${statsHtml(list)}
-  <div class="segs" role="tablist" aria-label="Відомості">${SEGS.map(([k,t])=>`<button class="seg ${state.seg===k?'on':''}" data-seg="${k}">${t}<span>${segCount(k)}</span></button>`).join('')}</div>
-  ${zfSummary()}
-  <label class="check"><input type="checkbox" id="c-cont" ${state.cont?'checked':''}> Показати колонки контингенту: курс, форма, фінансування, ОКР, пільга, мобільність, громадянство, дата народження, стать, накази, завершення навчання</label>
-  <div class="body ${state.sel?'with':''}">
-    <div class="tw">${state.mode==='year'?yearTable(list):termTable(list)}</div>
-    ${state.sel&&STUDENTS.find(x=>x.id===state.sel&&inKind(x))?detailHtml(state.sel):''}
-  </div>
-  <div class="legend"><span><i style="background:var(--ok-bg);color:var(--ok)">✓</i>сплачено</span><span><i style="background:var(--warn-bg);color:var(--warn)">½</i>частково / звірте</span><span><i style="background:var(--bad-bg);color:var(--bad)">!</i>борг, термін минув</span><span><i style="background:var(--na)"></i>ще не настав термін</span><span><i style="background:var(--info-bg);color:var(--info)">Б</i>бюджет</span><span><i style="border-style:dashed;color:var(--brand)">＋</i>позначити оплату семестру відомості (як «+» у вашій таблиці)</span></div>`;
+  <div class="segs" role="tablist" aria-label="Відомості">${SEGS.map(([k,t])=>`<button class="seg ${state.seg===k?'on':''}" data-seg="${k}">${t}<span>${segCount(k)}</span></button>`).join('')}
+    <div class="legend mini"><span><i style="background:var(--ok-bg)"></i>сплачено</span><span><i style="background:var(--warn-bg)"></i>частково</span><span><i style="background:var(--bad-bg)"></i>борг</span><span><i style="background:var(--na)"></i>не настав термін</span><span><i style="background:var(--info-bg)"></i>бюджет</span></div></div>
+  <div class="work">
+    <div class="col">${zfSummary()}<div class="tw">${state.mode==='year'?yearTable(list):termTable(list)}</div></div>
+    ${showDetail?detailHtml(state.sel):''}
+  </div>`;
   bindHistory();
 }
 const CONT=['Курс','Форма','Фінансування','ОКР','Пільгова категорія','Акад. мобільність','Громадянство','Дата народження','Повних років','Стать','Зарахування','Відрахування / академвідпустка','Поновлення / переведення','Завершено навчання'];
@@ -535,7 +573,7 @@ function bindHistory(){
   const on=(id,k,num)=>{const el=$('#'+id);if(!el)return;el.oninput=el.onchange=()=>{state[k]=num?+el.value:el.value;
     if(id==='f-q'){const p=el.selectionStart;render();const n=$('#f-q');n.focus();n.setSelectionRange(p,p)}else render()}};
   on('f-year','year',1);on('f-sem','sem',1);on('f-group','group');on('f-pay','pay');on('f-q','q');
-  $('#c-cont').onchange=e=>{state.cont=e.target.checked;try{localStorage.setItem('opl-cont',state.cont?'1':'0')}catch(_){}render()};
+  $('#c-cont').onclick=()=>{state.cont=!state.cont;try{localStorage.setItem('opl-cont',state.cont?'1':'0')}catch(_){}render()};
 }
 
 /* ---------- КАРТКА СТУДЕНТА ---------- */
@@ -619,34 +657,30 @@ function renderReceipts(tabs){
   if(!phone.sid)phone.sid=(phoneStudents().find(s=>s.id==='KK-2')||phoneStudents()[0]).id;
   main.innerHTML=`${header('Оплати / Квитанції','Квитанції від студентів',`<button class="btn" data-act="export">Експорт у Excel</button>`)}
   ${tabs}
-  <div class="dsub" style="max-width:860px">Квитанції надходять з мобільного застосунку студента (основний канал) і з Google-форми — на перехідний період, поки всі студенти не встановили застосунок. Бухгалтер звіряє з випискою банку: «Прийняти» — оплата одразу з’являється в історії оплат, студент отримує сповіщення в застосунку.</div>
+  <div class="work"><div class="col">
   <div class="segs" role="tablist" aria-label="Джерело квитанцій">${[['all','Усі'],['new','Нові'],['app','Мобільний застосунок'],['form','Google-форма']].map(([k,t])=>`<button class="seg ${rfilter===k?'on':''}" data-rf="${k}">${t}<span>${cnt(k)}</span></button>`).join('')}</div>
-  <div class="tw"><table><thead><tr><th class="st s0">№</th><th>Надіслано</th><th class="l">Курс · група</th><th class="l">ПІБ студента</th><th>Сума, грн</th><th class="l">Період оплати</th><th>Квитанція</th><th>Статус / дія</th></tr></thead><tbody>
+  <div class="tw"><table><thead><tr><th>Надіслано</th><th class="l">Студент</th><th class="l">Сума · період</th><th>Квитанція</th><th>Статус / дія</th></tr></thead><tbody>
    ${rows.map((r,i)=>{const s=STUDENTS.find(x=>x.id===r.sid),g=gById[s.group];const per=semsOf(g,r.kind).find(m=>m.key===r.key).label;
      const st=r.status==='new'?['Нова','warn']:r.status==='accepted'?['Прийнято','ok']:['Відхилено','bad'];
-     return `<tr class="${r.fresh?'sel':''}"><td class="st s0 n">${i+1}</td><td class="reg" style="line-height:1.25;padding:4px 10px">${dts(r.ts)}<div class="src ${r.channel}">${r.channel==='app'?ICON_PHONE:ICON_FORM}${CH[r.channel]}</div></td><td class="l reg">${g.course} курс · ${g.name}</td><td class="nm" style="min-width:0"><a data-goto="${s.id}">${esc(s.name)}</a></td><td class="num">${fmt(r.amount)}</td><td class="l reg">${per}${r.kind==='hostel'?' · гуртожиток':''}</td>
+     return `<tr class="${r.fresh?'sel':''}"><td class="reg" style="line-height:1.25;padding:4px 10px">${dts(r.ts)}<div class="src src-${r.channel}">${r.channel==='app'?ICON_PHONE:ICON_FORM}${CH[r.channel]}</div></td><td class="nm two" style="min-width:0"><a data-goto="${s.id}">${esc(s.name)}</a><small>${g.course} курс · ${g.name}</small></td><td class="l two"><b>${fmt(r.amount)} грн</b><small>${per}${r.kind==='hostel'?' · гуртожиток':''}</small></td>
        <td><span class="link">${esc(r.file)}</span> <span style="font-size:11.5px;color:var(--muted)">${r.source}</span></td>
-       ${r.status==='new'?`<td style="padding:4px 8px;width:150px"><div style="display:flex;gap:6px;justify-content:center"><button class="btn sm pri" data-accept="${r.id}">Прийняти</button><button class="btn sm" data-reject="${r.id}" title="Відхилити" aria-label="Відхилити">✕</button></div></td>`:`<td class="f-${st[1]}" style="white-space:normal;line-height:1.25;padding:4px 8px;width:150px;max-width:150px">${st[0]}${r.reason?`<div style="font-weight:500;font-size:11px">${esc(r.reason)}</div>`:''}</td>`}</tr>`}).join('')||'<tr><td colspan="8" class="reg" style="height:70px">Квитанцій немає.</td></tr>'}
+       ${r.status==='new'?`<td style="padding:4px 8px;width:150px"><div style="display:flex;gap:6px;justify-content:center"><button class="btn sm pri" data-accept="${r.id}">Прийняти</button><button class="btn sm" data-reject="${r.id}" title="Відхилити" aria-label="Відхилити">✕</button></div></td>`:`<td class="f-${st[1]}" style="white-space:normal;line-height:1.25;padding:4px 8px;width:150px;max-width:150px">${st[0]}${r.reason?`<div style="font-weight:500;font-size:11px">${esc(r.reason)}</div>`:''}</td>`}</tr>`}).join('')||'<tr><td colspan="5" class="reg" style="height:70px">Квитанцій немає.</td></tr>'}
   </tbody></table></div>
-  <div class="caps" style="margin-top:12px">Як студент надсилає квитанцію з мобільного застосунку</div>
-  <div class="appdemo">
-    <div class="steps card">
-      <label class="fld"><span>Студент у застосунку (для демонстрації)</span><select class="ctl" id="ph-s">${phoneStudents().map(s=>`<option value="${s.id}" ${s.id===phone.sid?'selected':''}>${esc(s.name)} · ${gById[s.group].name}</option>`).join('')}</select></label>
-      <ol>
-        <li><b>Платежі → «Надіслати квитанцію».</b> Студент бачить, скільки і за який семестр має сплатити.</li>
-        <li><b>Обирає вид оплати і період,</b> сума підставляється сама; фотографує квитанцію або додає PDF.</li>
-        <li><b>Квитанція з’являється в цій таблиці</b> зі статусом «Нова» і позначкою «Мобільний застосунок».</li>
-        <li><b>Бухгалтер приймає або відхиляє</b> — студент одразу отримує сповіщення, а статус у застосунку змінюється.</li>
-      </ol>
-      <div class="dsub">Оплата карткою прямо в застосунку квитанції не потребує: вона зараховується автоматично. Батьки можуть оплатити за посиланням.</div>
-      <div class="dsub">Спробуйте: надішліть квитанцію з телефона праворуч — вона з’явиться в таблиці вище. Потім натисніть «Прийняти» і подивіться на телефон.</div>
-    </div>
-    <div class="phone" aria-label="Мобільний застосунок студента">${phoneHtml()}</div>
-  </div>`;
+  </div><aside class="phonecol">
+    <div class="phone" aria-label="Мобільний застосунок студента: надіслати квитанцію">${phoneHtml()}</div>
+  </aside></div>`;
   main.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{rfilter=b.dataset.rf;render()});
-  $('#ph-s').onchange=e=>{phone.sid=e.target.value;phone.screen='pay';phone.notice=null;render()};
   bindPhone();
 }
+function openAbout(){document.querySelector('.modal')?.remove();const m=document.createElement('div');m.className='modal';
+  m.innerHTML=`<div class="scrim" data-mclose></div><form><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2>Що змінилось у розділі оплат</h2><button type="button" class="x" data-mclose aria-label="Закрити">×</button></div>
+  <ul class="about"><li><b>Одна таблиця замість двох:</b> контингент (форма, фінансування, статус, пільга, накази) і оплати — в одному рядку студента.</li>
+  <li><b>Оплати на весь термін:</b> кожному студенту нараховано всі семестри від вступу до випуску за тарифами його набору.</li>
+  <li><b>Колонки й вкладки — як у вашій відомості:</b> 1–4 курс, академічна мобільність, заочна форма; експорт у Excel — у тих самих колонках.</li>
+  <li><b>Квитанції з мобільного застосунку:</b> студент надсилає фото, бухгалтер приймає у вкладці «Квитанції від студентів», студент отримує сповіщення.</li>
+  <li><b>Гуртожиток</b> ведеться в тій самій таблиці окремим видом оплати.</li></ul>
+  <div class="btns" style="justify-content:flex-end"><button type="button" class="btn pri" data-mclose>Зрозуміло</button></div></form>`;
+  document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target.closest('[data-mclose]'))m.remove()})}
 function phoneOpen(s,kind){return ledger(s,kind).sems.filter(m=>m.left>0)}
 function phoneHtml(){
   const s=STUDENTS.find(x=>x.id===phone.sid),g=gById[s.group];
@@ -765,6 +799,7 @@ document.addEventListener('click',e=>{
     case'export':toast('У робочій версії — файл .xlsx у колонках вашої відомості, з вкладками 1–4 курс, мобільність, заочна');break;
     case'import':toast('У робочій версії — завантаження виписки банку, оплати розносяться автоматично');break;
     case'link':toast('Посилання на оплату скопійовано — його можна надіслати батькам');break;
+    case'about':openAbout();break;
     case'hidenote':try{localStorage.setItem('opl-note3','1')}catch(_){}render();break;
     default:toast('У прототипі ця дія не реалізована')}
 });
