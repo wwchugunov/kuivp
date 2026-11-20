@@ -232,16 +232,20 @@ ul.about b{color:var(--ink)}
   .work{flex-direction:column}.col>.tw{max-height:70vh}.work .detail{width:auto;height:auto}
   .phonecol{justify-content:center}.phone{height:700px}
 }
+
+/* --- довгий сайдбар --- */
+.side{overflow-y:auto;gap:16px}
+#sidenav{display:flex;flex-direction:column;gap:14px}
+.side .nav{height:auto;min-height:36px;padding-block:7px;font-size:13.5px;line-height:1.25}
+.side .sec{gap:2px}
 </style>
 
 <div class="mtop"><span style="background:var(--logo);color:var(--side);border-radius:7px;width:28px;height:28px;display:grid;place-items:center">c.</span>campus · Оплати</div>
 <div class="app">
   <aside class="side">
     <div class="logo"><i>c.</i><span>campus</span><b>LEARN</b></div>
-    <div class="sec"><small>АДМІНІСТРУВАННЯ</small>
-      <a class="nav on" href="#history"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Оплати</a>
-    </div>
-    <div class="user"><i>ОК</i><div><b>Олена Кравець</b><small>Бухгалтерія</small></div></div>
+    <nav id="sidenav" aria-label="Розділи адмінки"></nav>
+    <div class="user"><i>ОК</i><div><b>Олена Кравець</b><small>Адміністратор</small></div></div>
   </aside>
   <main id="main"></main>
 </div>
@@ -396,8 +400,10 @@ const $=s=>document.querySelector(s);const main=$('#main');
 const pill=(t,c)=>`<span class="pill p-${c}">${esc(t)}</span>`;
 const studyPill=s=>pill(s.status,s.status==='Навчається'?'ok':s.status==='Відраховано'?'bad':'warn');
 const newReceipts=()=>RECEIPTS.filter(r=>r.status==='new').length;
-function nav(){const v=(location.hash||'#history').slice(1);state.view=['history','receipts','tariffs','reports'].includes(v)?v:'history';render()}
+function nav(){const v=(location.hash||'#history').slice(1);state.view=(PAY_VIEWS.includes(v)||PAGES[v])?v:'history';render()}
 function render(){
+  $('#sidenav').innerHTML=sideHtml();
+  if(PAGES[state.view]){renderPage();return}
   const n=newReceipts();
   const tabs=`<nav class="tabs" aria-label="Розділи оплат">${[['history','Історія оплат'],['receipts','Квитанції із застосунку'+(n?` <span class="cnt">${n}</span>`:'')],['tariffs','Тарифи'],['reports','Звіти']].map(([k,t])=>`<a href="#${k}" class="${state.view===k?'on':''}">${t}</a>`).join('')}</nav>`;
   ({history:renderHistory,receipts:renderReceipts,tariffs:renderTariffs,reports:renderReports})[state.view](tabs);
@@ -448,7 +454,7 @@ function renderHistory(tabs){
   const kindT=state.kind==='study'?'навчання':'гуртожиток';
   const showDetail=state.sel&&STUDENTS.find(x=>x.id===state.sel&&inKind(x));
   main.innerHTML=`
-  ${header(`Оплати / ${kindT} / ${state.mode==='year'?yearLabel(state.year)+' · '+SN(state.sem)+' семестр':'весь термін навчання'}`,'Історія оплат',
+  ${header(`Фінанси / Оплати / ${kindT} / ${state.mode==='year'?yearLabel(state.year)+' · '+SN(state.sem)+' семестр':'весь термін навчання'}`,'Історія оплат',
     `<button class="btn" data-act="import">Імпорт виписки</button><button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="pay">+ Внести оплату</button>`)}
   ${tabs}
   <div class="toolbar">
@@ -619,6 +625,67 @@ function renderReceipts(tabs){
        ${r.status==='new'?`<td style="padding:4px 8px;width:170px"><div style="display:flex;gap:6px;justify-content:center"><button class="btn sm pri" data-accept="${r.id}">Прийняти</button><button class="btn sm" data-reject="${r.id}" title="Відхилити" aria-label="Відхилити">✕</button></div></td>`:`<td class="f-${st[1]}" style="white-space:normal;line-height:1.25;padding:4px 8px;width:170px">${st[0]}${r.reason?`<div style="font-weight:500;font-size:11px">${esc(r.reason)}</div>`:''}</td>`}</tr>`}).join('')||`<tr><td colspan="5" class="reg" style="height:80px">${rfilter==='new'?'Нових квитанцій немає — усе опрацьовано.':'Квитанцій немає.'}</td></tr>`}
   </tbody></table></div></div></div>`;
   main.querySelectorAll('[data-rf]').forEach(b=>b.onclick=()=>{rfilter=b.dataset.rf;render()});
+}
+
+/* ---------- ІНШІ РОЗДІЛИ АДМІНКИ (за вимогами замовника; дані вигадані) ---------- */
+const P=(t,c)=>({t,c});
+const PAGES={
+ 'dist-tech':{sec:'Дистанційне навчання',title:'Технічний журнал занять',act:'Додати заняття',
+  cols:['Дата','Пара','Група','Дисципліна','Викладач','Платформа','Тривалість','Присутні','Запис','Статус'],
+  rows:[['20.11.2026','3','ПР 4/24','Кримінальне право','Ткаченко В.','Zoom','80 хв','24 / 26','запис_2011.mp4',P('Проведено','ok')],['20.11.2026','2','КБ 3/25','Мережева безпека','Іваненко О.','Meet','80 хв','19 / 22','запис_2011_2.mp4',P('Проведено','ok')],['19.11.2026','4','ПР 6/24','Цивільне право','Мороз Н.','Zoom','45 хв','17 / 21','—',P('Без запису','warn')],['19.11.2026','1','К-ПО 2/26','Основи правоохоронної діяльності','Гриценко О.','Zoom','—','—','—',P('Перенесено','idle')],['18.11.2026','2','ПР 1/23','Юридична психологія','Кравчук І.','Meet','80 хв','20 / 23','запис_1811.mp4',P('Проведено','ok')]]},
+ 'dist-journal':{sec:'Дистанційне навчання',title:'Журнал групи',act:'Експорт журналу',tabs:['ПР 4/24','КБ 3/25','К-ПО 2/26'],
+  cols:['Студент','Присутність онлайн','Середній бал','Пропуски','Останнє заняття','Статус'],
+  rows:[['Федоренко Єлизавета Олегівна','96%','4,8','1','20.11.2026',P('Активний','ok')],['Харченко Матвій Дмитрович','88%','4,1','3','20.11.2026',P('Активний','ok')],['Цимбал Анастасія Сергіївна','71%','3,6','7','18.11.2026',P('Ризик','warn')],['Шевченко Владислав Ігорович','54%','3,2','11','12.11.2026',P('Потрібна увага','bad')],['Яковенко Кирило Олександрович','92%','4,5','2','20.11.2026',P('Активний','ok')]]},
+ 'dist-methods':{sec:'Дистанційне навчання',title:'Навчально-методичне забезпечення',act:'Завантажити матеріал',tabs:['Усі','Силабуси','Робочі програми','Лекції','Тести'],
+  cols:['Дисципліна','Тип','Автор','Курс','Оновлено','Статус'],
+  rows:[['Кримінальне право','Силабус','Ткаченко В.','3','02.09.2026',P('Затверджено','ok')],['Мережева безпека','Робоча програма','Іваненко О.','2','28.08.2026',P('Затверджено','ok')],['Цивільне право','Лекції (12)','Мороз Н.','3','14.11.2026',P('На погодженні','warn')],['Юридична психологія','Тести (5)','Кравчук І.','4','10.11.2026',P('Затверджено','ok')],['Адміністративне право','Силабус','Гриценко О.','2','15.06.2025',P('Потребує оновлення','bad')]]},
+ 'ord-st':{sec:'Канцелярія',title:'Накази · студенти',act:'Новий наказ',tabs:['Зарахування','Відрахування','Переведення','Поновлення'],
+  cols:['№ наказу','Дата','Студент','Група','Підстава','Статус'],
+  rows:{'Зарахування':[['214-с','25.08.2026','Федоренко Є. О.','К-ПО 2/26','Договір №1187, вступ 2026',P('Підписано','ok')],['215-с','25.08.2026','Харченко М. Д.','К-ПО 2/26','Договір №1190, вступ 2026',P('Підписано','ok')],['233-с','01.09.2026','Цимбал А. С.','К-ПО 2/26','Договір №1203, вступ 2026',P('Підписано','ok')]],
+   'Відрахування':[['412-с','15.10.2026','Мороз В. О.','ПР 4/24','Невиконання умов договору',P('Підписано','ok')],['430-с','18.11.2026','Ребров А. С.','ПР-З 1/23','Власне бажання',P('На підписі','warn')]],
+   'Переведення':[['301-с','01.09.2026','Кравчук І. П.','ПР-З 2/25','З денної на заочну форму',P('Підписано','ok')],['398-с','01.10.2026','Юрченко П. А.','К-ПО 2/26','Академічна відпустка',P('Підписано','ok')]],
+   'Поновлення':[['421-с','04.11.2026','Остапчук В. М.','ПР-З 1/23','Заява, ліквідація академрізниці',P('Чернетка','idle')]]}},
+ 'ord-emp':{sec:'Канцелярія',title:'Накази · працівники',act:'Новий наказ',tabs:['Прийняття','Звільнення','Навантаження'],
+  cols:['№ наказу','Дата','Працівник','Посада · кафедра','Зміст','Статус'],
+  rows:{'Прийняття':[['88-к','29.08.2026','Іваненко Олег','Доцент · кібербезпеки','Прийняти на 1,0 ставки',P('Підписано','ok')],['91-к','01.09.2026','Литвин Ірина','Методист · навчальний відділ','Прийняти на 0,5 ставки',P('Підписано','ok')]],
+   'Звільнення':[['102-к','30.10.2026','Савчук Петро','Ст. викладач · права','За угодою сторін',P('Підписано','ok')]],
+   'Навантаження':[['95-к','05.09.2026','Кафедра права','—','Розподіл навантаження на 2026–2027',P('Підписано','ok')],['110-к','15.11.2026','Ткаченко Віктор','Доцент · права','Додаткові 40 год (заміна)',P('На підписі','warn')]]}},
+ 'ord-disp':{sec:'Канцелярія',title:'Розпорядження',act:'Нове розпорядження',
+  cols:['№','Дата','Тема','Виконавці','Термін','Статус'],
+  rows:[['47','18.11.2026','Підготовка до зимової сесії','Навчальний відділ, кафедри','05.12.2026',P('Виконується','warn')],['46','12.11.2026','Звірка оплат за І семестр','Бухгалтерія','25.11.2026',P('Виконується','warn')],['45','03.11.2026','Оновлення силабусів','Кафедри','01.11.2026',P('Прострочено','bad')],['44','20.10.2026','Інвентаризація бібліотеки','Бібліотека','15.11.2026',P('Виконано','ok')]]},
+ 'archive':{sec:'Архів',title:'Архів',act:'Передати в архів',tabs:['Особові справи','Накази','Відомості','Дипломи'],
+  cols:['Документ','Тип','Рік','Справа №','Місце зберігання','Строк зберігання'],
+  rows:[['Особова справа · Нестеренко І. П.','Особова справа','2023','ОС-23/114','Стелаж 4, полиця 2','75 років'],['Накази з контингенту студентів','Накази','2025','01-04/25','Стелаж 1, полиця 5','Постійно'],['Залікові відомості ПР 1/23','Відомості','2025','05-12/25','Стелаж 2, полиця 1','10 років'],['Журнал видачі дипломів','Дипломи','2024','07-01/24','Сейф 1','Постійно']]},
+ 'repo':{sec:'Репозитарій',title:'Репозитарій',act:'Додати роботу',tabs:['Усі','Кваліфікаційні','Курсові','Статті'],
+  cols:['Назва роботи','Автор','Тип','Рік','Кафедра','Унікальність','Статус'],
+  rows:[['Кримінально-правова характеристика кібершахрайства','Литвиненко А. О.','Кваліфікаційна','2026','Права','91%',P('Опубліковано','ok')],['Захист персональних даних у хмарних сервісах','Антоненко Д. С.','Курсова','2026','Кібербезпеки','84%',P('На перевірці','warn')],['Медіація в господарських спорах','Онищенко А. Р.','Курсова','2026','Права','62%',P('Доопрацювання','bad')],['Цифрові докази в кримінальному процесі','Ткаченко В.','Стаття','2025','Права','96%',P('Опубліковано','ok')]]},
+ 'load':{sec:'Навантаження',title:'Навантаження викладачів',act:'Розподілити навантаження',
+  cols:['Викладач','Кафедра','Ставка','План, год','Виконано, год','Виконання','Статус'],
+  rows:[['Ткаченко Віктор','Права','1,0','600','284','bar:47',P('За графіком','ok')],['Іваненко Олег','Кібербезпеки','1,0','600','251','bar:42',P('За графіком','ok')],['Мороз Наталія','Права','0,75','450','142','bar:32',P('Відставання','warn')],['Кравчук Ігор','Права','0,5','300','150','bar:50',P('За графіком','ok')],['Гриценко Олена','Коледж','1,0','720','198','bar:28',P('Відставання','bad')]]},
+ 'edu':{sec:'Навчальний відділ',title:'Навчальний відділ',act:'Новий навчальний план',tabs:['Навчальні плани','Сесія','Розклад'],
+  cols:['Група','Спеціальність','Семестр','Дисциплін','Кредитів ЄКТС','Екзаменів','Статус'],
+  rows:[['ПР 4/24','Право','5','8','30','4',P('Затверджено','ok')],['КБ 3/25','Кібербезпека','3','7','30','3',P('Затверджено','ok')],['К-ПО 2/26','Правоохоронна діяльність','1','9','30','4',P('На погодженні','warn')],['ПР-З 2/25','Право (заочна)','3','6','30','3',P('Затверджено','ok')]]},
+};
+const NAV=[['Фінанси',[['history','Оплати','M2 5h20v14H2zM2 10h20M6 15h4']]],
+ ['Дистанційне навчання',[['dist-tech','Технічний журнал занять','M3 5h18v12H3zM8 21h8M12 17v4'],['dist-journal','Журнал групи','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5'],['dist-methods','Навч.-методичне забезпечення','M14 3H6v18h12V7zM14 3v4h4']]],
+ ['Канцелярія',[['ord-st','Накази · студенти','M7 3h10v18H7zM10 8h4M10 12h4'],['ord-emp','Накази · працівники','M9 8a3 3 0 1 0 0-.01M3 20c0-3 3-5 6-5s6 2 6 5M16 11h5M18.5 8.5v5'],['ord-disp','Розпорядження','M5 4h14v16H5zM9 9h6M9 13h6M9 17h3']]],
+ ['Інше',[['archive','Архів','M3 4h18v4H3zM5 8v12h14V8M10 12h4'],['repo','Репозитарій','M4 4h7v16H4zM13 4h7v16h-7'],['load','Навантаження','M4 20V10M10 20V4M16 20v-7M21 20H3'],['edu','Навчальний відділ','M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5']]]];
+const PAY_VIEWS=['history','receipts','tariffs','reports'];
+let ptab={},pq='';
+function sideHtml(){const cur=PAY_VIEWS.includes(state.view)?'history':state.view;
+  return NAV.map(([sec,items])=>`<div class="sec"><small>${sec.toUpperCase()}</small>${items.map(([k,t,d])=>`<a class="nav ${cur===k?'on':''}" href="#${k}"><svg viewBox="0 0 24 24"><path d="${d}"/></svg>${t}</a>`).join('')}</div>`).join('')}
+function cellHtml(v){if(v&&v.t)return`<td class="f-${v.c}">${v.t}</td>`;if(typeof v==='string'&&v.startsWith('bar:')){const p=v.slice(4);return`<td><div class="bar" style="--p:${p}%"><i></i><span>${p}%</span></div></td>`}return`<td class="l reg">${esc(v)}</td>`}
+function renderPage(){
+  const pg=PAGES[state.view];const tab=pg.tabs?(ptab[state.view]||pg.tabs[0]):null;
+  let rows=Array.isArray(pg.rows)?pg.rows:pg.rows[tab];
+  if(Array.isArray(pg.rows)&&tab&&tab!=='Усі'&&pg.tabs.indexOf(tab)>0&&state.view!=='dist-journal'&&state.view!=='edu')rows=rows.filter(r=>r.some(c=>typeof c==='string'&&(c.toLowerCase().includes(tab.toLowerCase().slice(0,5)))));
+  if(pq)rows=rows.filter(r=>r.some(c=>String(c&&c.t||c).toLowerCase().includes(pq.toLowerCase())));
+  main.innerHTML=`${header(pg.sec,pg.title,`<button class="btn" data-act="export">Експорт у Excel</button><button class="btn pri" data-act="soon">+ ${pg.act}</button>`)}
+  <div class="toolbar">${pg.tabs?`<div class="sw" role="tablist">${pg.tabs.map(t=>`<button class="${t===tab?'on':''}" data-ptab="${esc(t)}">${t}</button>`).join('')}</div>`:''}<input class="ctl grow" id="p-q" type="search" placeholder="Пошук" aria-label="Пошук" value="${esc(pq)}"></div>
+  <div class="work"><div class="col"><div class="tw"><table><thead><tr>${pg.cols.map(c=>`<th class="l">${c}</th>`).join('')}</tr></thead><tbody>
+  ${rows.map(r=>`<tr>${r.map(cellHtml).join('')}</tr>`).join('')||`<tr><td colspan="${pg.cols.length}" class="reg" style="height:70px">Нічого не знайдено.</td></tr>`}</tbody></table></div></div></div>`;
+  main.querySelectorAll('[data-ptab]').forEach(b=>b.onclick=()=>{ptab[state.view]=b.dataset.ptab;render()});
+  const q=$('#p-q');q.oninput=()=>{pq=q.value;const p=q.selectionStart;render();const n=$('#p-q');n.focus();n.setSelectionRange(p,p)};
 }
 
 /* ---------- ТАРИФИ ---------- */
