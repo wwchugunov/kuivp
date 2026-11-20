@@ -16,3 +16,13 @@ python3 -m http.server 8765 --directory prototype
 ## Як запустити плагін у Figma
 
 Plugins → Development → Import plugin from manifest… → `figma-plugin-campus-learn/manifest.json` → запустити.
+
+## Netlify
+
+Сайт: https://kuivp-oplaty.netlify.app
+
+Збірка: `sh scripts/build.sh` → `dist/index.html` (налаштовано в `netlify.toml`).
+
+```bash
+npx netlify-cli deploy --prod --dir dist
+```
